@@ -4,6 +4,7 @@ using Dominus.Domain.Interfaces;
 //using Dominus.Infrastructure.Cloudinary;
 using Dominus.Infrastructure.Data;
 using Dominus.Infrastructure.Extensions;
+using Dominus.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -234,6 +235,7 @@ var app = builder.Build();
 
 
 
+app.UseGlobalExceptionHandler();
 
 
 
@@ -301,44 +303,44 @@ if (app.Environment.IsDevelopment())
 
 // CORS must be before UseHttpsRedirection, UseAuthentication and UseAuthorization
 // This ensures CORS headers are set for all requests including preflight
-app.UseCors("AllowLocalDev");
+//app.UseCors("AllowLocalDev");
 
 // Handle preflight requests explicitly
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
-        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-        context.Response.StatusCode = 200;
-        await context.Response.WriteAsync(string.Empty);
-        return;
-    }
-    await next();
-});
+//app.Use(async (context, next) =>
+//{
+//    if (context.Request.Method == "OPTIONS")
+//    {
+//        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
+//        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+//        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+//        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+//        context.Response.StatusCode = 200;
+//        await context.Response.WriteAsync(string.Empty);
+//        return;
+//    }
+//    await next();
+//});
 
-app.UseHttpsRedirection();
 
 // Global exception handler middleware for development
-if (app.Environment.IsDevelopment())
-{
-    app.Use(async (context, next) =>
-    {
-        try
-        {
-            await next();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Unhandled exception: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsync($"An error occurred: {ex.Message}");
-        }
-    });
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.Use(async (context, next) =>
+//    {
+//        try
+//        {
+//            await next();
+//        }
+//        catch (Exception ex)
+//        {
+//            Console.WriteLine($"Unhandled exception: {ex.Message}");
+//            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+//            context.Response.StatusCode = 500;
+//            await context.Response.WriteAsync($"An error occurred: {ex.Message}");
+//        }
+//    });
+//}
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
