@@ -1,6 +1,7 @@
 using BCrypt.Net;
 using Dominus.Domain.DTOs.AuthDTOs;
 using Dominus.Domain.Entities;
+using Dominus.Domain.Enums;
 using Dominus.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -25,17 +26,14 @@ namespace Dominus.Application.Services
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto)
         {
-            // Check if user already exists
             var existingUser = await _userRepository.GetAsync(u => u.Email == registerRequestDto.Email);
             if (existingUser != null)
             {
                 return new AuthResponseDto(400, "User with this email already exists");
             }
 
-            // Hash password
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerRequestDto.Password);
 
-            // Create new user
             var user = new User
             {
                 Name = registerRequestDto.Name,
@@ -46,6 +44,16 @@ namespace Dominus.Application.Services
                 CreatedOn = DateTime.UtcNow
             };
 
+            //var admin = new User
+            //{
+            //    Name = "Admin",
+            //    Email = "admin@gmail.com",
+            //    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            //    Role = Roles.admin,
+            //    IsBlocked = false,
+            //    CreatedOn = DateTime.UtcNow
+            //};
+
             await _userRepository.AddAsync(user);
             await _userRepository.SaveChangesAsync();
 
@@ -54,30 +62,25 @@ namespace Dominus.Application.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequestDto)
         {
-            // Find user by email
             var user = await _userRepository.GetAsync(u => u.Email == loginRequestDto.Email);
             if (user == null)
             {
                 return new AuthResponseDto(404, "User not found");
             }
 
-            // Check if user is blocked
             if (user.IsBlocked)
             {
                 return new AuthResponseDto(403, "User account is blocked");
             }
 
-            // Verify password
             if (!BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
             {
                 return new AuthResponseDto(401, "Invalid credentials");
             }
 
-            // Generate tokens
             var accessToken = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
 
-            // Save refresh token
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             _userRepository.Update(user);
@@ -88,30 +91,25 @@ namespace Dominus.Application.Services
 
         public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
         {
-            // Find user by refresh token
             var user = await _userRepository.GetAsync(u => u.RefreshToken == refreshToken);
             if (user == null)
             {
                 return new AuthResponseDto(401, "Invalid refresh token");
             }
 
-            // Check if refresh token is expired
             if (user.RefreshTokenExpiryTime == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
             {
                 return new AuthResponseDto(401, "Refresh token has expired");
             }
 
-            // Check if user is blocked
             if (user.IsBlocked)
             {
                 return new AuthResponseDto(403, "User account is blocked");
             }
 
-            // Generate new tokens
             var newAccessToken = GenerateJwtToken(user);
             var newRefreshToken = GenerateRefreshToken();
 
-            // Update refresh token
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             _userRepository.Update(user);
@@ -153,7 +151,7 @@ namespace Dominus.Application.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(360),
+                Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)

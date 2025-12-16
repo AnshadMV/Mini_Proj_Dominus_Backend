@@ -23,8 +23,8 @@ namespace Dominus.Infrastructure.Persistence
         {
             return await _context.Products
                 //.Include(p => p.Category)
-                .Include(p => p.AvailableSizes)
-                .Include(p => p.Images)
+                .Include(p => p.AvailableColors)
+                //.Include(p => p.im)
                 .Where(p => p.CategoryId == categoryId && p.IsActive && !p.IsDeleted)
                 .ToListAsync();
         }
@@ -33,8 +33,14 @@ namespace Dominus.Infrastructure.Persistence
         {
             return await _context.Products
                 //.Include(p => p.Category)
-                .Include(p => p.AvailableSizes)
-                .Include(p => p.Images)
+                .Include(p => p.AvailableColors)
+                //.Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
+        public async Task<Product?> GetByIdAsync(int id)
+        {
+            return await _context.Products
+                .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
     }

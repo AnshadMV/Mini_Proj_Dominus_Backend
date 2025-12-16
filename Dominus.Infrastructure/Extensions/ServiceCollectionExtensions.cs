@@ -1,3 +1,6 @@
+using Dominus.Application.Interfaces;
+using Dominus.Application.Interfaces.IRepository.OrderRepo;
+using Dominus.Application.Services;
 using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,16 +14,33 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
-            
+            services.AddScoped<IColorRepository, ColorRepository>();
+
+
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+            services.AddScoped<ICartRepository, CartRepository>();
+
+            services.AddScoped<IWishlistRepository, WishlistRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+
+
             return services;
         }
 
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            services.AddScoped<Dominus.Domain.Interfaces.IAuthService, Dominus.Application.Services.AuthService>();
-            services.AddScoped<Dominus.Domain.Interfaces.IUserService, Dominus.Application.Services.UserService>();
-            services.AddScoped<Dominus.Application.Services.IProductService, Dominus.Application.Services.ProductService>();
-            
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IProductService,ProductService>();
+            services.AddScoped<IColorService, ColorService>();
+
+            services.AddScoped<ICategoryService, CategoryService>();
+
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IWishlistService, WishlistService>();
+            services.AddScoped<IOrderService, OrderService>();
+
             return services;
         }
     }

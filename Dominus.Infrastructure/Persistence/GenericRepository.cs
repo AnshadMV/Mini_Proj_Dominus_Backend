@@ -70,7 +70,15 @@ namespace Dominus.Infrastructure.Persistence
             var entity = await _dbSet.FindAsync(id);
             if (entity != null) Delete(entity);
         }
-
+       
         public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
+        public IQueryable<T> Query()
+        {
+            return _context.Set<T>().AsNoTracking();
+        }
+
+
     }
+
+
 }

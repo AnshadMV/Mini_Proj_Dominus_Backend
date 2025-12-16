@@ -1,52 +1,62 @@
-// Dominus.WebAPI / Program.cs
 using Dominus.Application.Services;
+using Dominus.Domain.Interfaces;
+//using Dominus.Infrastructure.Cloudinary;
+//using Dominus.Infrastructure.Cloudinary;
 using Dominus.Infrastructure.Data;
 using Dominus.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models; // <- required for OpenApi types
+using Microsoft.OpenApi.Models; 
 using System;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
-using System.Net;
 
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 ServicePointManager.Expect100Continue = false;
 
-
-
-
-
-
 var builder = WebApplication.CreateBuilder(args);
 
-// DB (WebAPI references Infrastructure for AppDbContext)
+
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// AutoMapper, Repos, Services (extension methods from Infrastructure)
+
+
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddRepositories();
 builder.Services.AddServices();
 
-// JWT secret
+
+
+
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret is not configured. Please set 'Jwt:Secret' in appsettings.json");
 var key = Encoding.ASCII.GetBytes(jwtSecret);
 
-// Authentication
+
+
+
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+
+
+
+
+
 .AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
@@ -59,20 +69,42 @@ builder.Services.AddAuthentication(options =>
 
     options.Events = new JwtBearerEvents
     {
-        OnTokenValidated = ctx =>
+        OnChallenge = context =>
         {
-            Console.WriteLine("Token validated. Claims:");
-            foreach (var c in ctx.Principal.Claims)
-                Console.WriteLine($"{c.Type} => {c.Value}");
-            return Task.CompletedTask;
+            context.HandleResponse();
+
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+
+            var result = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                error = "Unauthorized",
+                message = "JWT token is missing or invalid"
+            });
+
+            return context.Response.WriteAsync(result);
         },
-        OnAuthenticationFailed = ctx =>
+
+        OnForbidden = context =>
         {
-            Console.WriteLine("AuthenticationFailed: " + ctx.Exception?.Message);
-            return Task.CompletedTask;
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+
+            var result = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                error = "Forbidden",
+                message = "You do not have permission to access this resource"
+            });
+
+            return context.Response.WriteAsync(result);
         }
     };
 });
+
+
+
+
+
 
 builder.Services.AddCors(options =>
 {
@@ -95,13 +127,18 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Authorization policies
+
+
+
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireRole("admin", "Admin"));
-    options.AddPolicy("User", policy => policy.RequireRole("user", "admin", "User", "Admin"));
-    options.AddPolicy("Customer", policy => policy.RequireRole("user", "User"));
+    options.AddPolicy("User", policy => policy.RequireRole("user", "User"));
 });
+
+
+
 
 
 builder.Services.AddControllers()
@@ -110,24 +147,34 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-// After builder.Services.AddControllers()
+
+
+
+
+
+
+
 builder.Services.Configure<FormOptions>(options =>
 {
     options.ValueLengthLimit = int.MaxValue;
-    options.MultipartBodyLengthLimit = int.MaxValue; // 2GB limit
+    options.MultipartBodyLengthLimit = int.MaxValue;
     options.MemoryBufferThreshold = int.MaxValue;
 });
 
-// Also configure Kestrel server limits
+
+
+
+
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = int.MaxValue;
-    // Increase request timeout to handle large file uploads (10 minutes)
     serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
     serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(10);
 });
 
-// Configure request timeout for file uploads
+
+
+
 builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
 {
     options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
@@ -136,16 +183,17 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 
 builder.Services.AddEndpointsApiExplorer();
 
-// Swagger � defined in Web project only
+
+
+
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dominus API", Version = "v1" });
 
-    // Add servers to OpenAPI spec
     c.AddServer(new OpenApiServer { Url = "https://localhost:7121", Description = "HTTPS Server" });
     c.AddServer(new OpenApiServer { Url = "http://localhost:5180", Description = "HTTP Server" });
 
-    // JWT bearer definition
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
@@ -155,7 +203,6 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer"
     });
 
-    // Use Reference-only scheme in the requirement (recommended pattern)
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -171,9 +218,44 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-builder.Services.AddScoped<CloudinaryService>();
+
+
+
+
+//builder.Services.Configure<CloudinarySettings>(
+//    builder.Configuration.GetSection("Cloudinary")
+//);
+
+//builder.Services.AddScoped<IImageStorageService, CloudinaryService>();
+
 
 var app = builder.Build();
+
+
+
+
+
+
+
+
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    try
+    {
+        db.Database.Migrate();
+        Console.WriteLine("Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database migration failed: {ex.Message}");
+        throw;
+    }
+}
+
+
 
 if (app.Environment.IsDevelopment())
 {
@@ -182,14 +264,30 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dominus API v1");
         c.RoutePrefix = "swagger";
-        // Enable request duration display
+
+
+
+        // Shows how long the API request took (in milliseconds) after you execute an endpoint.
         c.ConfigObject.DisplayRequestDuration = true;
-        c.ConfigObject.DocExpansion = Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None;
-        // Enable CORS for Swagger UI (allows file uploads)
+
+
+        // Expand-collabsive aakkaaann
+        //c.ConfigObject.DocExpansion = Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None;
+
+
+        //Allows direct URL linking to a specific endpoint or operation.
         c.ConfigObject.DeepLinking = true;
-        c.ConfigObject.Filter = "";
-        c.ConfigObject.ShowExtensions = true;
-        c.ConfigObject.ShowCommonExtensions = true;
+
+
+        // End point Filter option cheyyaan vendi
+        //c.ConfigObject.Filter = "";  
+
+
+        //Displays vendor extensions (x-*) in Swagger UI.
+        //c.ConfigObject.ShowExtensions = true;
+
+        //Shows standard OpenAPI extensions such as:
+        //c.ConfigObject.ShowCommonExtensions = true;
     });
     app.UseReDoc(options =>
     {
@@ -199,7 +297,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.MapGet("/", () => Results.Redirect("/swagger"));
+//app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // CORS must be before UseHttpsRedirection, UseAuthentication and UseAuthorization
 // This ensures CORS headers are set for all requests including preflight
@@ -244,7 +342,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapControllers();
 

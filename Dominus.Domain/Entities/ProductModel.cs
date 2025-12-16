@@ -8,21 +8,27 @@ namespace Dominus.Domain.Entities
 {
     public class Product : BaseEntity
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Name { get; set; } = null!;
+        public string Description { get; set; } = null!;
         public decimal Price { get; set; }
 
         public int CategoryId { get; set; }
-        //public Category Category { get; set; }
+        public Category? Category { get; set; }
 
-        public string Brand { get; set; }
+        public string? Warranty { get; set; }
+        public bool TopSelling { get; set; } = true;
+        public bool Status { get; set; } = true;
+
         public bool InStock { get; set; } = true;
         public bool IsActive { get; set; } = true;
 
-        public string? SpecialOffer { get; set; }
-
         public int CurrentStock { get; set; }
-        public ICollection<ProductSize> AvailableSizes { get; set; } = new List<ProductSize>();
-        public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
+
+        public ICollection<ProductColors> AvailableColors { get; set; }
+            = new List<ProductColors>();
+
+        //public ICollection<ProductImage> Images { get; set; }
+        //    = new List<ProductImage>();
     }
+
 }

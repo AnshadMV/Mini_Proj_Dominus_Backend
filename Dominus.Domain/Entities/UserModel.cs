@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dominus.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,9 +19,5 @@ namespace Dominus.Domain.Entities
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
     }
-    public enum Roles
-    {
-        user,
-        admin
-    }
+    
 }
