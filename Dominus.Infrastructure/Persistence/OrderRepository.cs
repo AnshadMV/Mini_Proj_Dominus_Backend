@@ -1,5 +1,4 @@
-﻿using Dominus.Application.Interfaces.IRepository.OrderRepo;
-using Dominus.Domain.Entities;
+﻿using Dominus.Domain.Entities;
 using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

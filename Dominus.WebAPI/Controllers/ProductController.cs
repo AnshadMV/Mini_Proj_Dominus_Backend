@@ -9,6 +9,7 @@ namespace Dominus.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProductsController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -103,12 +104,19 @@ namespace Dominus.WebAPI.Controllers
             var result = await _productService.UpdateProductAsync(dto);
             return StatusCode(result.StatusCode, result);
         }
-
+       
         [HttpPatch("status/{id}")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> ToggleStatus([Range(1, int.MaxValue)] int id)
         {
             var result = await _productService.ToggleProductStatusAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
+        {
+            var result = await _productService.DeleteProductAsync(id);
             return StatusCode(result.StatusCode, result);
         }
 

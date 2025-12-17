@@ -1,7 +1,6 @@
 ﻿using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
 
-namespace Dominus.Application.Interfaces.IRepository.OrderRepo
+namespace Dominus.Domain.Interfaces
 {
     public interface IOrderRepository : IGenericRepository<Order>
     {

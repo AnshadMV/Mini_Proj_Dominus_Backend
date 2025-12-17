@@ -105,7 +105,6 @@ namespace Dominus.Application.Services
             if (category == null || category.IsDeleted)
                 return new ApiResponse<string>(404, "Category not found");
 
-            // Prevent deleting if products exist (business decision)
             if (category.Products != null && category.Products.Any(p => !p.IsDeleted))
                 return new ApiResponse<string>(400, "Cannot delete category with existing products");
 

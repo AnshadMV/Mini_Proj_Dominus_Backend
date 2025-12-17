@@ -1,4 +1,5 @@
 ﻿using Dominus.Application.Interfaces;
+using Dominus.Domain.DTOs.OrderDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -21,9 +22,9 @@ namespace Dominus.WebAPI.Controllers
 
         [HttpPost]
         [Authorize(Policy = "user")]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(CreateOrderDto dto)
         {
-            var response = await _service.CreateOrderAsync(UserId);
+            var response = await _service.CreateOrderAsync(UserId, dto);
             return StatusCode(response.StatusCode, response);
         }
 

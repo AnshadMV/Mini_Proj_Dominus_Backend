@@ -1,5 +1,6 @@
 ﻿using Dominus.Application.Interfaces;
 using Dominus.Domain.Common;
+using Dominus.Domain.DTOs.CartDTOs;
 using Dominus.Domain.DTOs.WishlistDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Interfaces;
@@ -31,13 +32,20 @@ namespace Dominus.Application.Services
         {
             var product = await _productRepo.GetByIdAsync(dto.ProductId);
 
-            if (product == null)
+            if (product == null || product.IsDeleted || !product.IsActive)
             {
                 return new ApiResponse<WishlistDto>(
                     404,
                     "Product not found"
                 );
             }
+            //if (!product.InStock || product.CurrentStock < 0)
+            //{
+            //    return new ApiResponse<WishlistDto>(
+            //        400,
+            //        "Product out of stock"
+            //    );
+            //}
 
             var wishlist = await _wishlistRepo.GetByUserIdAsync(userId);
 

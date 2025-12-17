@@ -1,9 +1,12 @@
+
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Dominus.Domain.DTOs.AuthDTOs
 {
     public class RegisterRequestDto
     {
+        [DefaultValue("yourName")]
         [Required(ErrorMessage = "Name is required")]
         [MinLength(3, ErrorMessage = "Name must be at least 3 characters")]
         [MaxLength(50, ErrorMessage = "Name cannot exceed 50 characters")]
@@ -13,6 +16,7 @@ namespace Dominus.Domain.DTOs.AuthDTOs
         )]
         public string Name { get; set; } = null!;
 
+        [DefaultValue("yourEmail")]
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email format")]
         [MaxLength(150, ErrorMessage = "Email cannot exceed 150 characters")]
@@ -22,6 +26,7 @@ namespace Dominus.Domain.DTOs.AuthDTOs
         )]
         public string Email { get; set; } = null!;
 
+        [DefaultValue("yourPass")]
         [Required(ErrorMessage = "Password is required")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
         [MaxLength(50, ErrorMessage = "Password cannot exceed 50 characters")]

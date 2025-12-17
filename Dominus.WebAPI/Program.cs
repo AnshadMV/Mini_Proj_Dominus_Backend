@@ -14,13 +14,21 @@ using System;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
+using Serilog;
 
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 ServicePointManager.Expect100Continue = false;
 
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Host.UseSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -98,7 +106,8 @@ builder.Services.AddAuthentication(options =>
             });
 
             return context.Response.WriteAsync(result);
-        }
+        },
+        
     };
 });
 
@@ -183,8 +192,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 });
 
 builder.Services.AddEndpointsApiExplorer();
-
-
 
 
 

@@ -15,7 +15,6 @@ namespace Dominus.Infrastructure.Data
             : base(options)
         {
         }
-
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<User> Users { get; set; }
 
@@ -111,14 +110,15 @@ namespace Dominus.Infrastructure.Data
                 .HasForeignKey(wi => wi.ProductId);
 
             modelBuilder.Entity<Order>()
-    .HasMany(o => o.Items)
-    .WithOne(i => i.Order)
-    .HasForeignKey(i => i.OrderId);
+     .HasMany(o => o.Items)
+     .WithOne(i => i.Order)
+     .HasForeignKey(i => i.OrderId);
 
             modelBuilder.Entity<OrderItem>()
                 .HasOne(i => i.Product)
                 .WithMany()
                 .HasForeignKey(i => i.ProductId);
+
 
 
         }

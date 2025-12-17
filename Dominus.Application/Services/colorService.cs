@@ -2,11 +2,6 @@
 using Dominus.Domain.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Dominus.Application.Services
 {
@@ -88,25 +83,25 @@ namespace Dominus.Application.Services
             IsActive = c.IsActive
         };
 
-        Task<ApiResponse<ColorDto>> IColorService.CreateAsync(CreateColorDto dto)
-        {
-            throw new NotImplementedException();
-        }
+        //Task<ApiResponse<ColorDto>> IColorService.CreateAsync(CreateColorDto dto)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        Task<ApiResponse<ColorDto>> IColorService.UpdateAsync(UpdateColorDto dto)
-        {
-            throw new NotImplementedException();
-        }
+        //Task<ApiResponse<ColorDto>> IColorService.UpdateAsync(UpdateColorDto dto)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        Task<ApiResponse<IEnumerable<ColorDto>>> IColorService.GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
+        //Task<ApiResponse<IEnumerable<ColorDto>>> IColorService.GetAllAsync()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
-        Task<ApiResponse<string>> IColorService.ToggleStatusAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+        //Task<ApiResponse<string>> IColorService.ToggleStatusAsync(int id)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 
 }

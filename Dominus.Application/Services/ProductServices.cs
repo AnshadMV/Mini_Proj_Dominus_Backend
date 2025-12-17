@@ -12,7 +12,7 @@ namespace Dominus.Application.Services
         private readonly IGenericRepository<Product> _repository;
         private readonly IProductRepository _productRepository;
         private readonly IColorRepository _colorRepository;
-        private readonly ICategoryRepository _categoryRepository; 
+        private readonly ICategoryRepository _categoryRepository;
 
         public ProductService(
             IGenericRepository<Product> repository,
@@ -23,7 +23,7 @@ namespace Dominus.Application.Services
             _repository = repository;
             _productRepository = productRepository;
             _colorRepository = colorRepository;
-             _categoryRepository = categoryRepository; 
+            _categoryRepository = categoryRepository;
         }
 
         public async Task<ApiResponse<ProductDto>> AddProductAsync(CreateProductDto dto)
@@ -33,17 +33,29 @@ namespace Dominus.Application.Services
 
             var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
 
-            if (category == null)
+            if (category == null || category.IsDeleted)
                 return new ApiResponse<ProductDto>(404, "Category not found");
 
             if (!category.IsActive)
                 return new ApiResponse<ProductDto>(400, "Category is inactive");
 
+            if (!dto.InStock && dto.CurrentStock > 0 )
+                return new ApiResponse<ProductDto>(400, "Stock conflicting");
+
+
             var colors = new List<Color>();
 
             if (dto.ColorIds != null && dto.ColorIds.Any())
             {
-                colors = await _colorRepository.GetByIdsAsync(dto.ColorIds);
+
+                if (dto.ColorIds.Count != dto.ColorIds.Distinct().Count())
+                    return new ApiResponse<ProductDto>(
+                        400,
+                        "Duplicate colors are not allowed"
+                    );
+
+
+                 colors = await _colorRepository.GetByIdsAsync(dto.ColorIds);
 
                 if (colors.Count != dto.ColorIds.Count)
                     return new ApiResponse<ProductDto>(400, "One or more colors not found");
@@ -68,6 +80,8 @@ namespace Dominus.Application.Services
 
             if (dto.ColorIds != null && dto.ColorIds.Any())
             {
+
+                
                 foreach (var colorId in dto.ColorIds)
                 {
                     product.AvailableColors.Add(new ProductColors
@@ -202,6 +216,28 @@ namespace Dominus.Application.Services
             );
         }
 
+        public async Task<ApiResponse<string>> DeleteProductAsync(int id)
+        {
+            var product = await _repository.GetByIdAsync(id);
+
+            if (product == null)
+                return new ApiResponse<string>(404, "Product not found");
+
+            if (product.IsDeleted)
+                return new ApiResponse<string>(400, "Product already deleted");
+
+            product.IsDeleted = true;
+            product.IsActive = false;
+
+            _repository.Update(product);
+            await _repository.SaveChangesAsync();
+
+            return new ApiResponse<string>(
+                200,
+                "Product deleted successfully"
+            );
+        }
+
         public async Task<ApiResponse<IEnumerable<ProductDto>>> GetFilteredProducts(
             string? name,
             int? categoryId,
@@ -238,7 +274,6 @@ namespace Dominus.Application.Services
             );
         }
 
-        // ================= MAPPER =================
         private static ProductDto MapToDTO(Product p)
         {
             return new ProductDto
@@ -262,39 +297,39 @@ namespace Dominus.Application.Services
         public async Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(
     int page = 1,
     int pageSize = 10)
-{
-    if (page < 1) page = 1;
-    if (pageSize < 1) pageSize = 10;
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
 
-   var query = _productRepository.Query()
-    .Where(p => p.IsActive && !p.IsDeleted)
-    .Include(p => p.Category)
-    .Include(p => p.AvailableColors)
-        .ThenInclude(pc => pc.Color);
+            var query = _productRepository.Query()
+             .Where(p => p.IsActive && !p.IsDeleted)
+             .Include(p => p.Category)
+             .Include(p => p.AvailableColors)
+                 .ThenInclude(pc => pc.Color);
 
 
-    var totalCount = await query.CountAsync();
+            var totalCount = await query.CountAsync();
 
-    var products = await query
-        .OrderByDescending(p => p.CreatedOn)
-        .Skip((page - 1) * pageSize)
-        .Take(pageSize)
-        .ToListAsync();
+            var products = await query
+                .OrderByDescending(p => p.CreatedOn)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-    var result = new PagedResult<ProductDto>
-    {
-        Page = page,
-        PageSize = pageSize,
-        TotalCount = totalCount,
-        Items = products.Select(MapToDTO)
-    };
+            var result = new PagedResult<ProductDto>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = products.Select(MapToDTO)
+            };
 
-    return new ApiResponse<PagedResult<ProductDto>>(
-        200,
-        "Products fetched successfully",
-        result
-    );
-}
+            return new ApiResponse<PagedResult<ProductDto>>(
+                200,
+                "Products fetched successfully",
+                result
+            );
+        }
 
     }
 }

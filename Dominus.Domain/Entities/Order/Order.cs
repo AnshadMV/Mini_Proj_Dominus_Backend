@@ -1,5 +1,4 @@
-﻿using Dominus.Domain.Entities;
-using Dominus.Domain.Enums;
+﻿using Dominus.Domain.Enums;
 using System;
 using System.Collections.Generic;
 

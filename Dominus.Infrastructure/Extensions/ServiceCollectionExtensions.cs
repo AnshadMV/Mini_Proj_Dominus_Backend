@@ -1,5 +1,4 @@
 using Dominus.Application.Interfaces;
-using Dominus.Application.Interfaces.IRepository.OrderRepo;
 using Dominus.Application.Services;
 using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Persistence;
@@ -18,9 +17,7 @@ namespace Dominus.Infrastructure.Extensions
 
 
             services.AddScoped<ICategoryRepository, CategoryRepository>();
-
             services.AddScoped<ICartRepository, CartRepository>();
-
             services.AddScoped<IWishlistRepository, WishlistRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
 

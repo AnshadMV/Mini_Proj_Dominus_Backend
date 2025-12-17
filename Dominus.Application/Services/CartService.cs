@@ -29,13 +29,21 @@ namespace Dominus.Application.Services
         {
             var product = await _productRepo.GetByIdAsync(dto.ProductId);
 
-            if (product == null)
+            if (!product.InStock || product.CurrentStock < dto.Quantity)
+            {
+                return new ApiResponse<CartDto>(
+                    400,
+                    "Product out of stock"
+                );
+            }
+            if (product == null || product.IsDeleted || !product.IsActive)
             {
                 return new ApiResponse<CartDto>(
                     404,
-                    "Product not found"
+                    "Product not available"
                 );
             }
+
 
             var cart = await _cartRepo.GetByUserIdAsync(userId);
 

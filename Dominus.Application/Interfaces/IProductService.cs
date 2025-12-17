@@ -15,11 +15,13 @@ namespace Dominus.Application.Services
         Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(int categoryId);
         Task<IEnumerable<ProductDto>> GetAllProductsAsync();
         Task<ApiResponse<ProductDto>> UpdateProductAsync(UpdateProductDto dto);
+
+        Task<ApiResponse<string>> DeleteProductAsync(int id);
+
         Task<ApiResponse<string>> ToggleProductStatusAsync(int id);
         Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(
        int page = 1,
-       int pageSize = 10
-   );
+       int pageSize = 10 );
         Task<ApiResponse<IEnumerable<ProductDto>>>  GetFilteredProducts(
             string? name = null,
             int? categoryId = null,

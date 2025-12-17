@@ -1,5 +1,4 @@
 ﻿using Dominus.Application.Interfaces;
-using Dominus.Application.Interfaces.IRepository.OrderRepo;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.OrderDTOs;
 using Dominus.Domain.Entities;
@@ -10,26 +9,22 @@ namespace Dominus.Application.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepo;
-        private readonly ICartRepository _cartRepo;
         private readonly IProductRepository _productRepo;
 
         public OrderService(
             IOrderRepository orderRepo,
-            ICartRepository cartRepo,
             IProductRepository productRepo)
         {
             _orderRepo = orderRepo;
-            _cartRepo = cartRepo;
             _productRepo = productRepo;
         }
 
-        // ================= CREATE =================
-        public async Task<ApiResponse<OrderDto>> CreateOrderAsync(string userId)
+        public async Task<ApiResponse<OrderDto>> CreateOrderAsync(
+            string userId,
+            CreateOrderDto dto)
         {
-            var cart = await _cartRepo.GetByUserIdAsync(userId);
-
-            if (cart == null || !cart.Items.Any())
-                return new ApiResponse<OrderDto>(400, "Cart is empty");
+            if (dto.Items == null || !dto.Items.Any())
+                return new ApiResponse<OrderDto>(400, "No order items provided");
 
             var order = new Order
             {
@@ -38,15 +33,21 @@ namespace Dominus.Application.Services
 
             decimal total = 0;
 
-            foreach (var item in cart.Items)
+            foreach (var item in dto.Items)
             {
-                var product = item.Product;
+                var product = await _productRepo.GetByIdAsync(item.ProductId);
 
-                if (product == null || !product.IsActive || !product.InStock)
-                    return new ApiResponse<OrderDto>(400, $"Product not available");
+                if (product == null)
+                    return new ApiResponse<OrderDto>(404, "Product not found");
+
+                if (!product.IsActive || !product.InStock)
+                    return new ApiResponse<OrderDto>(400, $"{product.Name} is not available");
 
                 if (product.CurrentStock < item.Quantity)
-                    return new ApiResponse<OrderDto>(400, $"Insufficient stock for {product.Name}");
+                    return new ApiResponse<OrderDto>(
+                        400,
+                        $"Insufficient stock for {product.Name}"
+                    );
 
                 product.CurrentStock -= item.Quantity;
                 product.InStock = product.CurrentStock > 0;
@@ -64,8 +65,6 @@ namespace Dominus.Application.Services
             order.TotalAmount = total;
 
             await _orderRepo.AddAsync(order);
-            cart.Items.Clear();
-
             await _orderRepo.SaveChangesAsync();
 
             return new ApiResponse<OrderDto>(
@@ -75,7 +74,6 @@ namespace Dominus.Application.Services
             );
         }
 
-        // ================= GET MY ORDERS =================
         public async Task<ApiResponse<List<OrderDto>>> GetMyOrdersAsync(string userId)
         {
             var orders = await _orderRepo.GetByUserIdAsync(userId);
@@ -87,7 +85,6 @@ namespace Dominus.Application.Services
             );
         }
 
-        // ================= GET BY ID =================
         public async Task<ApiResponse<OrderDto>> GetOrderByIdAsync(string userId, int orderId)
         {
             var order = await _orderRepo.GetByIdWithItemsAsync(orderId);
@@ -102,7 +99,6 @@ namespace Dominus.Application.Services
             );
         }
 
-        // ================= MAPPER =================
         private static OrderDto Map(Order order) => new()
         {
             OrderId = order.Id,
