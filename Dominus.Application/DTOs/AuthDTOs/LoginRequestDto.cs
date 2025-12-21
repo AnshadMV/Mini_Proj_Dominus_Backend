@@ -10,9 +10,10 @@ namespace Dominus.Domain.DTOs.AuthDTOs
         [EmailAddress(ErrorMessage = "Invalid email format")]
         [MaxLength(150, ErrorMessage = "Email cannot exceed 150 characters")]
         [RegularExpression(
-    @"^(?![.\s])(?!.*\.\.)([a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)@gmail\.com$",
-    ErrorMessage = "Email must be a valid Gmail address ending with @gmail.com"
+    @"^(?![.\s])(?!.*\.\.)([a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$",
+    ErrorMessage = "Email must be a valid email address"
 )]
+
         public string Email { get; set; } = null!;
 
         [DefaultValue("yourPass")]

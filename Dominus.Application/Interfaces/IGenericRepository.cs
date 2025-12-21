@@ -28,6 +28,5 @@ namespace Dominus.Domain.Interfaces
         Task SaveChangesAsync();
 
         IQueryable<T> Query();
-
     }
 }

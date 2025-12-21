@@ -7,7 +7,7 @@ namespace Dominus.Application.Services
 {
     public interface ICategoryService
     {
-        Task<ApiResponse<CategoryDto>> AddCategoryAsync(CreateCategoryDto dto);
+        Task<ApiResponse<CreateCategoryDto>> AddCategoryAsync(CreateCategoryDto dto);
         Task<ApiResponse<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto);
         Task<ApiResponse<IEnumerable<CategoryDto>>> GetAllCategoriesAsync();
         Task<ApiResponse<CategoryDto>> GetCategoryByIdAsync(int id);

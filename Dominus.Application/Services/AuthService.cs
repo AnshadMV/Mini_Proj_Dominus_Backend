@@ -63,7 +63,7 @@ namespace Dominus.Application.Services
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequestDto)
         {
             var user = await _userRepository.GetAsync(u => u.Email == loginRequestDto.Email);
-            if (user == null)
+            if (user == null || user.IsDeleted )
             {
                 return new AuthResponseDto(404, "User not found");
             }
@@ -72,6 +72,9 @@ namespace Dominus.Application.Services
             {
                 return new AuthResponseDto(403, "User account is blocked");
             }
+
+
+            
 
             if (!BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
             {
@@ -141,14 +144,14 @@ namespace Dominus.Application.Services
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim("userId", user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.Name),
 
                 new Claim(ClaimTypes.Role, user.Role.ToString().ToLower())
             };
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(1),
@@ -156,7 +159,6 @@ namespace Dominus.Application.Services
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
             };
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);

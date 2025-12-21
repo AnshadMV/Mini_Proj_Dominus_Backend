@@ -1,13 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 public class UpdateProductDto
 {
+    [DefaultValue("")]
     [Required]
     public int Id { get; set; }
 
+    [DefaultValue("")]
     [Required]
     public string Name { get; set; } = null!;
 
+    [DefaultValue("")]
     [Required]
     public string Description { get; set; } = null!;
 
@@ -16,15 +20,16 @@ public class UpdateProductDto
 
     public int CategoryId { get; set; }
 
+    [DefaultValue("")]
     [Range(0, int.MaxValue)]
     public int CurrentStock { get; set; }
 
-    // ✅ USE THIS ONLY
     [MinLength(1, ErrorMessage = "At least one color is required")]
     public List<int> ColorIds { get; set; } = new();
 
     public bool IsActive { get; set; }
     public bool TopSelling { get; set; }
     public bool Status { get; set; }
+    [DefaultValue("")]
     public string? Warranty { get; set; }
 }

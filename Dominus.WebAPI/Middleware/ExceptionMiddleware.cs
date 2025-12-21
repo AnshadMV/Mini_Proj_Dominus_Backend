@@ -53,7 +53,8 @@ namespace Dominus.WebAPI.Middleware
             var response = new ApiResponse<object>(
                 context.Response.StatusCode,
                 _env.IsDevelopment() ? ex.Message : "Something went wrong",
-                _env.IsDevelopment() ? ex.StackTrace : null
+                //_env.IsDevelopment() ? ex.StackTrace : null
+                null
             );
 
             await context.Response.WriteAsync(

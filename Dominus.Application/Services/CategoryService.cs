@@ -2,11 +2,7 @@
 using Dominus.Domain.DTOs.CategoryDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace Dominus.Application.Services
 {
@@ -26,13 +22,13 @@ namespace Dominus.Application.Services
             _productRepo = productRepo;
         }
 
-        public async Task<ApiResponse<CategoryDto>> AddCategoryAsync(CreateCategoryDto dto)
+        public async Task<ApiResponse<CreateCategoryDto>> AddCategoryAsync(CreateCategoryDto dto)
         {
-            if (dto == null) return new ApiResponse<CategoryDto>(400, "Invalid category data");
+            if (dto == null) return new ApiResponse<CreateCategoryDto>(400, "Invalid category data");
 
             var exists = await _categoryRepo.GetByNameAsync(dto.Name.Trim());
             if (exists != null)
-                return new ApiResponse<CategoryDto>(409, "Category with same name already exists");
+                return new ApiResponse<CreateCategoryDto>(409, "Category with same name already exists");
 
             var category = new Category
             {
@@ -44,7 +40,12 @@ namespace Dominus.Application.Services
             await _genericRepo.AddAsync(category);
             await _genericRepo.SaveChangesAsync();
 
-            return new ApiResponse<CategoryDto>(201, "Category created", MapToDto(category));
+            return new ApiResponse<CreateCategoryDto>(200, "Category created", new CreateCategoryDto
+            {
+                Name = category.Name,
+                Description = category.Description,
+                IsActive = category.IsActive
+            });
         }
 
         public async Task<ApiResponse<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto)
@@ -88,16 +89,33 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<string>> ToggleCategoryStatusAsync(int id)
         {
-            var category = await _genericRepo.GetByIdAsync(id);
+            var category = await _categoryRepo.GetWithProductsAsync(id);
             if (category == null || category.IsDeleted)
                 return new ApiResponse<string>(404, "Category not found");
 
             category.IsActive = !category.IsActive;
+
+            if (category.Products != null)
+            {
+                foreach (var product in category.Products.Where(p => !p.IsDeleted))
+                {
+                    product.IsActive = category.IsActive;
+                    product.ModifiedOn = DateTime.UtcNow;
+                    product.ModifiedBy = "system";
+                }
+            }
+
             _genericRepo.Update(category);
             await _genericRepo.SaveChangesAsync();
 
-            return new ApiResponse<string>(200, category.IsActive ? "Category activated" : "Category deactivated");
+            return new ApiResponse<string>(
+                200,
+                category.IsActive
+                    ? "Category and products activated"
+                    : "Category and products deactivated"
+            );
         }
+
 
         public async Task<ApiResponse<string>> SoftDeleteCategoryAsync(int id)
         {
@@ -105,13 +123,30 @@ namespace Dominus.Application.Services
             if (category == null || category.IsDeleted)
                 return new ApiResponse<string>(404, "Category not found");
 
-            if (category.Products != null && category.Products.Any(p => !p.IsDeleted))
-                return new ApiResponse<string>(400, "Cannot delete category with existing products");
+            //if (category.Products != null && category.Products.Any(p => !p.IsDeleted))
+            //    return new ApiResponse<string>(400, "Cannot delete category with existing products");
+
+            if (category.Products != null && category.Products.Any())
+            {
+                foreach (var product in category.Products.Where(p => !p.IsDeleted))
+                {
+                    //product.IsDeleted = true;
+                    product.IsActive = false;
+                    product.DeletedOn = DateTime.UtcNow;
+                    product.DeletedBy = "system";
+                }
+            }
+
+            category.IsDeleted = true;
+            category.IsActive = false;
+
+            category.DeletedOn = DateTime.UtcNow;
+            category.DeletedBy = "system";
 
             _genericRepo.Delete(category);
             await _genericRepo.SaveChangesAsync();
 
-            return new ApiResponse<string>(200, "Category deleted", "deleted");
+            return new ApiResponse<string>(201, "Category deleted", "deleted");
         }
 
         private static CategoryDto MapToDto(Category c)
@@ -122,7 +157,8 @@ namespace Dominus.Application.Services
                 Name = c.Name,
                 Description = c.Description,
                 IsActive = c.IsActive,
-                ProductCount = c.Products?.Count ?? 0
+                ProductCount = c.Products?
+            .Count(p => p.IsActive && !p.IsDeleted) ?? 0
             };
         }
     }

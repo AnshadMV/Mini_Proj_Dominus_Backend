@@ -1,5 +1,6 @@
 ﻿using Dominus.Domain.DTOs.AuthDTOs;
 using Dominus.Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace   Dominus.WebAPI.Controllers
@@ -37,6 +38,7 @@ namespace   Dominus.WebAPI.Controllers
                 refreshToken = result.RefreshToken
             });
         }
+        
 
         //[HttpPost("refresh-token")]
         //public async Task<IActionResult> RefreshToken()

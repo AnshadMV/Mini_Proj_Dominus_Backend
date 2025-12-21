@@ -1,13 +1,20 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace Dominus.Domain.DTOs.CategoryDTOs
 {
     public class CreateCategoryDto
     {
+        [DefaultValue("Mobile/Accessories")]
         [Required]
-        [MaxLength(100)]
+        [MaxLength(15)]
+        [RegularExpression(
+            @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
+            ErrorMessage = "Category name must contain only letters and spaces"
+        )]
         public string Name { get; set; } = null!;
 
+        [DefaultValue("Definition....")]
         [MaxLength(500)]
         public string? Description { get; set; }
 

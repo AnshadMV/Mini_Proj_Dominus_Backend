@@ -14,6 +14,9 @@ namespace Dominus.Domain.Interfaces
         Task<ApiResponse<ColorDto>> UpdateAsync(UpdateColorDto dto);
         Task<ApiResponse<IEnumerable<ColorDto>>> GetAllAsync();
         Task<ApiResponse<string>> ToggleStatusAsync(int id);
+        Task<ApiResponse<string>> SoftDeleteColorAsync(int id);
+
+
     }
 
 }

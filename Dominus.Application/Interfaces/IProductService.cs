@@ -17,6 +17,7 @@ namespace Dominus.Application.Services
         Task<ApiResponse<ProductDto>> UpdateProductAsync(UpdateProductDto dto);
 
         Task<ApiResponse<string>> DeleteProductAsync(int id);
+        Task<ApiResponse<ProductDto>> PatchProductAsync(int id, PatchProductDto dto);
 
         Task<ApiResponse<string>> ToggleProductStatusAsync(int id);
         Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(

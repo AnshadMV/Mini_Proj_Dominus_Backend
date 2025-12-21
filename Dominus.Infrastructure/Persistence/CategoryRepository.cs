@@ -32,6 +32,7 @@ namespace Dominus.Infrastructure.Persistence
         public async Task<IEnumerable<Category>> GetAllActiveAsync()
         {
             return await _context.Categories
+                        .Include(c => c.Products) 
                 .Where(c => c.IsActive && !c.IsDeleted)
                 .ToListAsync();
         }

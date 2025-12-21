@@ -1,4 +1,6 @@
-﻿using Dominus.Domain.DTOs.ColorDTOs;
+﻿using Dominus.Application.Services;
+using Dominus.Domain.Common;
+using Dominus.Domain.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Data;
@@ -13,32 +15,65 @@ namespace Dominus.WebAPI.Controllers
     
     public class ColorsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IColorService _colorService;
 
-        public ColorsController(AppDbContext context)
+        public ColorsController( IColorService colorService)
         {
-            _context = context;
+            _colorService = colorService;
         }
 
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _context.Colors.Where(c => c.IsActive).ToListAsync());
+            var response = await _colorService.GetAllAsync();
+            return StatusCode(response.StatusCode, response);
         }
-
 
         [HttpPost]
         [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> Create(string name, string hexCode)
+        public async Task<IActionResult> Create([FromBody] CreateColorDto dto)
         {
-            var color = new Color { Name = name, HexCode = hexCode };
-            _context.Colors.Add(color);
-            await _context.SaveChangesAsync();
-            return Ok(color);
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object>(400, "Invalid color data"));
+
+            var response = await _colorService.CreateAsync(dto);
+            return StatusCode(response.StatusCode, response);
         }
 
-       
+        [HttpPut]
+        [Authorize(Policy= "Admin")]
+        public async Task<IActionResult> Update([FromBody]  UpdateColorDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object>(400, "Invalid color data"));
+
+            var result = await _colorService.UpdateAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPatch("status/{id:int}")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> ToggleStatus([FromRoute] int id)
+        {
+            if (id <= 0)
+                return BadRequest(new ApiResponse<object>(400, "Invalid color id"));
+
+            var result = await _colorService.ToggleStatusAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+
+
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> DeleteColors(int id)
+        {
+            var result = await _colorService.SoftDeleteColorAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+
     }
 
 

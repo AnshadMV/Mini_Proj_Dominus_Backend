@@ -20,7 +20,9 @@
 
         public int CurrentStock { get; set; }
 
-        // ✅ Only return color names
         public List<string> AvailableColors { get; set; } = new();
+
+        public List<string> DeactivatedColors { get; set; } = new();
+
     }
 }

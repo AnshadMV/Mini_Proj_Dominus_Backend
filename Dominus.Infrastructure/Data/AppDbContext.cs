@@ -1,11 +1,7 @@
-﻿using Dominus.Domain.Entities;
+﻿
+using Dominus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
+
 namespace Dominus.Infrastructure.Data
 {
     public class AppDbContext : DbContext
@@ -78,6 +74,7 @@ namespace Dominus.Infrastructure.Data
                 .HasOne(rt => rt.User)
                 .WithMany()
                 .HasForeignKey(rt => rt.UserId);
+
 
             // Product <-> Category
             modelBuilder.Entity<Product>()

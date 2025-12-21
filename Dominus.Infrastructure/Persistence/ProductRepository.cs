@@ -34,14 +34,15 @@ namespace Dominus.Infrastructure.Persistence
             return await _context.Products
                 //.Include(p => p.Category)
                 .Include(p => p.AvailableColors)
+                .ThenInclude(pc => pc.Color)
                 //.Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
-        public async Task<Product?> GetByIdAsync(int id)
-        {
-            return await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == id);
-        }
+        //public async Task<Product?> GetByIdAsync(int id)
+        //{
+        //    return await _context.Products
+        //        .AsNoTracking()
+        //        .FirstOrDefaultAsync(p => p.Id == id);
+        //}
     }
 }

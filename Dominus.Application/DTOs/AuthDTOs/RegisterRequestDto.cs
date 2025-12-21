@@ -6,25 +6,47 @@ namespace Dominus.Domain.DTOs.AuthDTOs
 {
     public class RegisterRequestDto
     {
+        private string _name = null!;
+
         [DefaultValue("yourName")]
         [Required(ErrorMessage = "Name is required")]
         [MinLength(3, ErrorMessage = "Name must be at least 3 characters")]
         [MaxLength(50, ErrorMessage = "Name cannot exceed 50 characters")]
         [RegularExpression(
             @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
-            ErrorMessage = "Name can contain only letters and spaces, and cannot start or end with space"
+            ErrorMessage = "Name can contain only letters and spaces"
         )]
-        public string Name { get; set; } = null!;
+        public string Name
+        {
+            get => _name;
+            set => _name = value?.Trim() ?? string.Empty;
+        }
+
+
+
 
         [DefaultValue("yourEmail")]
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email format")]
         [MaxLength(150, ErrorMessage = "Email cannot exceed 150 characters")]
+
+        //official RFC 5322 email pattern 
+        /*  [RegularExpression(
+        @"^(?![.\s])(?!.*\.\.)([a-zA-Z0-9]+([._%+-][a-zA-Z0-9]+)*)@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$",
+        ErrorMessage = "Email must be a valid email address"
+    )]*/
+
+
         [RegularExpression(
-    @"^(?![.\s])(?!.*\.\.)([a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)@gmail\.com$",
-    ErrorMessage = "Email must be a valid Gmail address ending with @gmail.com"
-        )]
+    @"^(?![.\s])(?!.*\.\.)([a-zA-Z0-9]+([._%+-][a-zA-Z0-9]+)*)@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$",
+    ErrorMessage = "Email must be a valid email address"
+)]
         public string Email { get; set; } = null!;
+
+
+
+
+
 
         [DefaultValue("yourPass")]
         [Required(ErrorMessage = "Password is required")]

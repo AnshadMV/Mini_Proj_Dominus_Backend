@@ -199,16 +199,30 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dominus API", Version = "v1" });
 
+
+    //If you want the option to choose between two servers (https://localhost:7121 and http://localhost:5180) but manage them effectively based on the environment (Development, Production, etc.), you can use IConfiguration to set which server URL to use dynamically. This way, you can keep both but not confuse users in production.
     c.AddServer(new OpenApiServer { Url = "https://localhost:7121", Description = "HTTPS Server" });
-    c.AddServer(new OpenApiServer { Url = "http://localhost:5180", Description = "HTTP Server" });
+    //c.AddServer(new OpenApiServer { Url = "http://localhost:5180", Description = "HTTP Server" });
+
+
+
+    //c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    //{
+    //    Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
+    //    Name = "Authorization",
+    //    In = ParameterLocation.Header,
+    //    Type = SecuritySchemeType.ApiKey,
+    //    Scheme = "Bearer"
+    //});
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
         Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Description = "JWT Authorization header using the Bearer scheme. Enter ONLY your JWT token. Do NOT type 'Bearer'."
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -275,7 +289,7 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger";
 
 
-
+        c.EnablePersistAuthorization();
         // Shows how long the API request took (in milliseconds) after you execute an endpoint.
         c.ConfigObject.DisplayRequestDuration = true;
 

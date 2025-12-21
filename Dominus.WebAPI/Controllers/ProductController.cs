@@ -18,15 +18,59 @@ namespace Dominus.WebAPI.Controllers
         {
             _productService = productService;
         }
-
-
         [HttpGet]
         [AllowAnonymous]
+
         public async Task<IActionResult> GetAll()
         {
             var products = await _productService.GetAllProductsAsync();
             return Ok(new ApiResponse<object>(200, "Products fetched successfully", products));
         }
+        [HttpPost]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> Create([FromForm] CreateProductDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object>(400, "Invalid product data"));
+
+            var result = await _productService.AddProductAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPatch("status/{id}")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> ToggleStatus([Range(1, int.MaxValue)] int id)
+        {
+            var result = await _productService.ToggleProductStatusAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        //[HttpPatch("{id}")]
+        //[Authorize(Policy = "Admin")]
+        //public async Task<IActionResult> PatchProduct(int id, [FromBody] PatchProductDto dto)
+        //{
+        //    var response = await _productService.PatchProductAsync(id, dto);
+        //    return StatusCode(response.StatusCode, response);
+        //}
+
+       
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
+        {
+            var result = await _productService.DeleteProductAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+        [HttpPut]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> Update([FromForm] UpdateProductDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object>(400, "Invalid product data"));
+
+            var result = await _productService.UpdateProductAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        
 
 
         [HttpGet("ByCategory/{categoryId}")]
@@ -83,42 +127,8 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpPost]
-        [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> Create([FromForm] CreateProductDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new ApiResponse<object>(400, "Invalid product data"));
-
-            var result = await _productService.AddProductAsync(dto);
-            return StatusCode(result.StatusCode, result);
-        }
-
-        [HttpPut]
-        [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> Update([FromForm] UpdateProductDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new ApiResponse<object>(400, "Invalid product data"));
-
-            var result = await _productService.UpdateProductAsync(dto);
-            return StatusCode(result.StatusCode, result);
-        }
-       
-        [HttpPatch("status/{id}")]
-        [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> ToggleStatus([Range(1, int.MaxValue)] int id)
-        {
-            var result = await _productService.ToggleProductStatusAsync(id);
-            return StatusCode(result.StatusCode, result);
-        }
-        [HttpDelete("{id}")]
-        [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
-        {
-            var result = await _productService.DeleteProductAsync(id);
-            return StatusCode(result.StatusCode, result);
-        }
+        
+        
 
     }
 }
