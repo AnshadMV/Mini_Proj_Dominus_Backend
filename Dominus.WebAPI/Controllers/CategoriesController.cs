@@ -1,4 +1,4 @@
-﻿using Dominus.Application.Services;
+﻿using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.CategoryDTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +16,7 @@ namespace Dominus.WebAPI.Controllers
         {
             _categoryService = categoryService;
         }
-        [HttpGet]
+        [HttpGet("Get_All")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
@@ -24,7 +24,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetBy_{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
@@ -34,7 +34,7 @@ namespace Dominus.WebAPI.Controllers
         }
 
 
-        [HttpPost]
+        [HttpPost("Admin/Create")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
         {
@@ -45,7 +45,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpPut]
+        [HttpPut("Admin/Update")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Update([FromBody] UpdateCategoryDto dto)
         {
@@ -56,7 +56,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpPatch("status/{id}")]
+        [HttpPatch("Admin/toggle/status")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> ToggleStatus([FromRoute] int id)
         {
@@ -64,7 +64,8 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("Admin/DeleteBy_{id}")]
+
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {

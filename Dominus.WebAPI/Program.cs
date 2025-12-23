@@ -161,6 +161,7 @@ builder.Services.AddControllers()
 
 
 
+builder.Services.AddHttpContextAccessor();
 
 
 
@@ -197,11 +198,11 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dominus API", Version = "v1" });
+    //c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dominus API", Version = "v1" });
 
 
     //If you want the option to choose between two servers (https://localhost:7121 and http://localhost:5180) but manage them effectively based on the environment (Development, Production, etc.), you can use IConfiguration to set which server URL to use dynamically. This way, you can keep both but not confuse users in production.
-    c.AddServer(new OpenApiServer { Url = "https://localhost:7121", Description = "HTTPS Server" });
+    //c.AddServer(new OpenApiServer { Url = "https://localhost:7121", Description = "HTTPS Server" });
     //c.AddServer(new OpenApiServer { Url = "http://localhost:5180", Description = "HTTP Server" });
 
 
@@ -285,8 +286,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dominus API v1");
-        c.RoutePrefix = "swagger";
+        //c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dominus API v1");
+        //c.RoutePrefix = "swagger";
 
 
         c.EnablePersistAuthorization();

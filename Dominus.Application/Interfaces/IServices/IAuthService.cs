@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dominus.Domain.DTOs.AuthDTOs;
 
-namespace Dominus.Domain.Interfaces
+namespace Dominus.Application.Interfaces.IServices
 {
     public interface IAuthService
     {

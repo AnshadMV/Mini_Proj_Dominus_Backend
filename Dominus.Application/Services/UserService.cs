@@ -1,6 +1,10 @@
+using Dominus.Application.Interfaces.IRepository;
+using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
 using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
+using Dominus.Domain.Enums;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Dominus.Application.Services
 {
@@ -8,13 +12,15 @@ namespace Dominus.Application.Services
     {
         private readonly IGenericRepository<User> _userRepository;
         private readonly IUserRepository _userRepositoryExtended;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public UserService(
             IGenericRepository<User> userRepository,
-            IUserRepository userRepositoryExtended)
+            IUserRepository userRepositoryExtended, IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
             _userRepositoryExtended = userRepositoryExtended;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ApiResponse<IEnumerable<User>>> GetAllUsersAsync()
@@ -44,14 +50,41 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<string>> BlockUnblockUserAsync(int id)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var userPrincipal = _httpContextAccessor.HttpContext?.User;
 
-            if (user == null || user.IsDeleted)
+            if (userPrincipal == null || !userPrincipal.Identity!.IsAuthenticated)
+                throw new UnauthorizedAccessException("Unauthorized");
+
+            var adminIdClaim = userPrincipal.FindFirst("userId");
+
+            if (adminIdClaim == null)
+                throw new UnauthorizedAccessException("Unauthorized");
+
+            var adminId = int.Parse(adminIdClaim.Value);
+
+            var admin = await _userRepository.GetByIdAsync(adminId);
+
+            if (admin == null || admin.IsDeleted)
+                throw new KeyNotFoundException("Admin not found");
+
+            if (admin.IsBlocked)
+                throw new UnauthorizedAccessException(
+                    "Blocked admins cannot block or unblock users"
+                );
+
+            var targetUser = await _userRepository.GetByIdAsync(id);
+
+            if (targetUser == null || targetUser.IsDeleted)
                 throw new KeyNotFoundException("User not found");
-
+            if (targetUser.Role == Roles.admin)
+                return new ApiResponse<string>(
+                    403,
+                    "Admin accounts cannot be blocked or unblocked",
+                    "forbidden"
+                );
             await _userRepositoryExtended.BlockUnblockUserAsync(id);
 
-            var action = user.IsBlocked ? "unblocked" : "blocked";
+            var action = targetUser.IsBlocked ? "Blocked" : "Un-Blocked";
 
             return new ApiResponse<string>(
                 200,
@@ -59,6 +92,8 @@ namespace Dominus.Application.Services
                 action
             );
         }
+
+
 
         public async Task<ApiResponse<string>> SoftDeleteUserAsync(int id)
         {

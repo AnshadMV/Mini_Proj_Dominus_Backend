@@ -1,4 +1,5 @@
-using Dominus.Application.Interfaces;
+using Dominus.Application.Interfaces.IRepository;
+using Dominus.Application.Interfaces.IServices;
 using Dominus.Application.Services;
 using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Persistence;

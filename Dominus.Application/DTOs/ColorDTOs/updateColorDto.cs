@@ -10,7 +10,7 @@ namespace Dominus.Domain.DTOs.ColorDTOs
 {
     public class UpdateColorDto
     {
-        [DefaultValue("CategoryId")]
+        [DefaultValue("ColorId")]
         [Required]
 
         public int Id { get; set; }

@@ -8,6 +8,6 @@
         public int TotalPages =>
             (int)Math.Ceiling((double)TotalCount / PageSize);
 
-        public IEnumerable<T> Items { get; set; } = Enumerable.Empty<T>();
+        public IEnumerable<T> Items { get; set; } = new List<T>();
     }
 }

@@ -1,10 +1,10 @@
-﻿using Dominus.Domain.Interfaces;
+﻿using Dominus.Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dominus.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/Admin")]
     [ApiController]
     [Authorize(Roles = "admin")] 
     public class UsersController : ControllerBase
@@ -16,28 +16,28 @@ namespace Dominus.WebAPI.Controllers
             _userService = userService;
         }
 
-        [HttpGet]
+        [HttpGet("GetAll")]
         public async Task<IActionResult> GetAllUsers()
         {
             var response = await _userService.GetAllUsersAsync();
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetBy_{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {
             var response = await _userService.GetUserByIdAsync(id);
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpPut("block-unblock/{id}")]
+        [HttpPut("Toggle/Block_Unblock")]
         public async Task<IActionResult> BlockUnblock(int id)
         {
             var response = await _userService.BlockUnblockUserAsync(id);
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteBy_{id}")]
         public async Task<IActionResult> SoftDelete(int id)
         {
             var response = await _userService.SoftDeleteUserAsync(id);

@@ -1,4 +1,4 @@
-﻿using Dominus.Domain.Interfaces;
+﻿using Dominus.Application.Interfaces.IRepository;
 using Dominus.Infrastructure.Data;
 using System;
 using System.Collections.Generic;

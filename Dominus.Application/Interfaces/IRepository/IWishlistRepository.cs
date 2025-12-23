@@ -1,6 +1,6 @@
 ﻿using Dominus.Domain.Entities;
 
-namespace Dominus.Domain.Interfaces
+namespace Dominus.Application.Interfaces.IRepository
 {
     public interface IWishlistRepository : IGenericRepository<Wishlist>
     {

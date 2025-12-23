@@ -1,16 +1,19 @@
-﻿using Dominus.Domain.Entities;
+﻿using Dominus.Application.DTOs.ProductDTOs;
+using Dominus.Domain.Common;
+using Dominus.Domain.DTOs.ProductDTOs;
+using Dominus.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dominus.Domain.Interfaces
+namespace Dominus.Application.Interfaces.IRepository
 {
     public interface IProductRepository : IGenericRepository<Product>
     {
-        Task<Product?> GetByIdAsync(int id);
         Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId);
         Task<Product?> GetProductWithDetailsAsync(int id);
+
     }
 }

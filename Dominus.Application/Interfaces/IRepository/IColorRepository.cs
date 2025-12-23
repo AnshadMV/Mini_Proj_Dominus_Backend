@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dominus.Domain.Interfaces
+namespace Dominus.Application.Interfaces.IRepository
 {
     public interface IColorRepository : IGenericRepository<Color>
     {

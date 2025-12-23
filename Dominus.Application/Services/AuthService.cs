@@ -1,8 +1,9 @@
 using BCrypt.Net;
+using Dominus.Application.Interfaces.IRepository;
+using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.DTOs.AuthDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Enums;
-using Dominus.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -151,13 +152,13 @@ namespace Dominus.Application.Services
                 new Claim(ClaimTypes.Role, user.Role.ToString().ToLower())
             };
 
-             var tokenDescriptor = new SecurityTokenDescriptor
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
+                   new SymmetricSecurityKey(key),
+                   SecurityAlgorithms.HmacSha256Signature)
             };
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);

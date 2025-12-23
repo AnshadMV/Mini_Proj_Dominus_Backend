@@ -1,7 +1,9 @@
-﻿using Dominus.Domain.Common;
+﻿using Dominus.Application.DTOs.ProductDTOs;
+using Dominus.Application.Interfaces.IRepository;
+using Dominus.Application.Interfaces.IServices;
+using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ProductDTOs;
 using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -78,6 +80,15 @@ namespace Dominus.Application.Services
                 if (colors.Any(c => !c.IsActive))
                     return new ApiResponse<ProductDto>(400, "One or more colors are inactive");
             }
+            var imageUrls = new List<string>();
+            //if (dto.Images != null && request.Images.Any())
+            //{
+            //    foreach (var file in request.Images)
+            //    {
+            //        var url = await _fileService.UploadAsync(file);
+            //        imageUrls.Add(url);
+            //    }
+            //}
 
             var product = new Product
             {
@@ -144,7 +155,7 @@ namespace Dominus.Application.Services
 
 
             if (product.IsDeleted)
-                return new ApiResponse<ProductDto>(400, "Cannot update a deleted product");
+                return new ApiResponse<ProductDto>(404, "Product not found");
 
             var trimmedName = dto.Name.Trim();
 
@@ -168,15 +179,15 @@ namespace Dominus.Application.Services
             if (dto.ColorIds != null && dto.ColorIds.Any())
             {
                 if (dto.ColorIds.Count != dto.ColorIds.Distinct().Count())
-                    return new ApiResponse<ProductDto>(400, "Duplicate colors are not allowed");
+                    return new ApiResponse<ProductDto>(409, "Duplicate colors are not allowed");
 
                 var colors = await _colorRepository.GetByIdsAsync(dto.ColorIds);
 
                 if (colors.Count != dto.ColorIds.Count)
-                    return new ApiResponse<ProductDto>(400, "One or more colors not found");
+                    return new ApiResponse<ProductDto>(404, "Colors not found");
 
                 if (colors.Any(c => c.IsDeleted))
-                    return new ApiResponse<ProductDto>(400, "One or more colors are deleted");
+                    return new ApiResponse<ProductDto>(404, "Colors not found");
 
                 if (colors.Any(c => !c.IsActive))
                     return new ApiResponse<ProductDto>(400, "One or more colors are inactive");
@@ -255,7 +266,6 @@ namespace Dominus.Application.Services
 
             bool changed = false;
 
-            // 🔹 Name
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
                 var trimmedName = dto.Name.Trim();
@@ -276,7 +286,6 @@ namespace Dominus.Application.Services
                 }
             }
 
-            // 🔹 Description
             if (!string.IsNullOrWhiteSpace(dto.Description))
             {
                 var desc = dto.Description.Trim();
@@ -287,14 +296,12 @@ namespace Dominus.Application.Services
                 }
             }
 
-            // 🔹 Price
             if (dto.Price.HasValue && product.Price != dto.Price.Value)
             {
                 product.Price = dto.Price.Value;
                 changed = true;
             }
 
-            // 🔹 Category
             if (dto.CategoryId.HasValue && product.CategoryId != dto.CategoryId.Value)
             {
                 var category = await _categoryRepository.GetByIdAsync(dto.CategoryId.Value);
@@ -309,7 +316,6 @@ namespace Dominus.Application.Services
                 changed = true;
             }
 
-            // 🔹 Stock
             if (dto.CurrentStock.HasValue && product.CurrentStock != dto.CurrentStock.Value)
             {
                 product.CurrentStock = dto.CurrentStock.Value;
@@ -317,7 +323,6 @@ namespace Dominus.Application.Services
                 changed = true;
             }
 
-            // 🔹 Flags
             if (dto.IsActive.HasValue && product.IsActive != dto.IsActive.Value)
             {
                 product.IsActive = dto.IsActive.Value;
@@ -336,7 +341,6 @@ namespace Dominus.Application.Services
                 changed = true;
             }
 
-            // 🔹 Colors (only if provided)
             if (dto.ColorIds != null)
             {
                 var existing = product.AvailableColors
@@ -354,10 +358,10 @@ namespace Dominus.Application.Services
                     var colors = await _colorRepository.GetByIdsAsync(incoming);
 
                     if (colors.Count != incoming.Count)
-                        return new ApiResponse<ProductDto>(400, "One or more colors not found");
+                        return new ApiResponse<ProductDto>(404, "One or more colors not found");
 
                     if (colors.Any(c => c.IsDeleted))
-                        return new ApiResponse<ProductDto>(400, "One or more colors are deleted");
+                        return new ApiResponse<ProductDto>(404, "One or more colors not found");
 
                     if (colors.Any(c => !c.IsActive))
                         return new ApiResponse<ProductDto>(400, "One or more colors are inactive");
@@ -376,14 +380,12 @@ namespace Dominus.Application.Services
                 }
             }
 
-            // 🔹 Warranty
             if (dto.Warranty != null && product.Warranty != dto.Warranty)
             {
                 product.Warranty = dto.Warranty;
                 changed = true;
             }
 
-            // 🟡 No changes
             if (!changed)
             {
                 return new ApiResponse<ProductDto>(
@@ -396,7 +398,6 @@ namespace Dominus.Application.Services
             _repository.Update(product);
             await _repository.SaveChangesAsync();
 
-            // Reload for response
             var updatedProduct = await _repository.GetAsync(
                 p => p.Id == id,
                 include: q => q
@@ -429,7 +430,7 @@ namespace Dominus.Application.Services
                 return new ApiResponse<string>(404, "Product is not found");
 
             if (product.IsDeleted)
-                return new ApiResponse<string>(400, "Product is not found");
+                return new ApiResponse<string>(404, "Product is not found");
 
             product.IsDeleted = true;
             product.IsActive = false;
@@ -458,14 +459,17 @@ namespace Dominus.Application.Services
         }
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
+
+
         {
+
+
             var products = await _productRepository.GetAllAsync(
                 include: q => q
                     .Include(p => p.Category)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
-
             return products
                 .Where(p =>  !p.IsDeleted)
                 .Select(MapToDTO);
@@ -502,58 +506,259 @@ namespace Dominus.Application.Services
             );
         }
 
-        
-
-        public async Task<ApiResponse<IEnumerable<ProductDto>>> GetFilteredProducts(
-            string? name,
-            int? categoryId,
-            decimal? minPrice,
-            decimal? maxPrice,
-            bool? inStock,
-            int page,
-            int pageSize,
-            string? sortBy,
-            bool descending)
+        public async Task<ApiResponse<PagedResult<ProductDto>>> GetFilteredProductsAsync(
+    ProductFilterDto filter)
         {
-            Expression<Func<Product, bool>> filter = p =>
-                p.IsActive &&
-                !p.IsDeleted &&
-                (string.IsNullOrEmpty(name) || p.Name.Contains(name)) &&
-                (!categoryId.HasValue || p.CategoryId == categoryId) &&
-                (!minPrice.HasValue || p.Price >= minPrice) &&
-                (!maxPrice.HasValue || p.Price <= maxPrice) &&
-                (!inStock.HasValue || p.InStock == inStock);
+            if (filter.ProductId.HasValue && filter.ProductId.Value <= 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "ProductId must be greater than 0"
+                );
+            }
 
-            var products = await _productRepository.GetAllAsync(
-                predicate: filter,
-                include: q => q
-                    .Include(p => p.Category)
-                    .Include(p => p.AvailableColors)
+            if (filter.Page < 1)
+                filter.Page = 1;
 
-                    .ThenInclude(pc => pc.Color)
-            );
+            if (filter.PageSize < 1 || filter.PageSize > 1000)
+                filter.PageSize = 20;
 
-            return new ApiResponse<IEnumerable<ProductDto>>(
-                200,
-                "Products fetched",
-                products.Select(MapToDTO)
-            );
-        }
-        public async Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(
-    int page = 1,
-    int pageSize = 10)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
+            if (filter.MinPrice.HasValue && filter.MinPrice.Value <= 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "MinPrice must be greater than 0"
+                );
+            }
 
-            var query = _productRepository.Query()
-             .Where(p => p.IsActive && !p.IsDeleted)
-             .Include(p => p.Category)
-             .Include(p => p.AvailableColors)
-                 .ThenInclude(pc => pc.Color);
+            if (filter.MaxPrice.HasValue && filter.MaxPrice.Value <= 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "MaxPrice must be greater than 0"
+                );
+            }
 
+            if (filter.MinPrice.HasValue &&
+                filter.MaxPrice.HasValue &&
+                filter.MinPrice.Value > filter.MaxPrice.Value)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "MinPrice cannot be greater than MaxPrice"
+                );
+            }
+
+            // 🔐 Category validation    
+            if (filter.CategoryId.HasValue)
+            {
+                var category = await _categoryRepository.GetByIdAsync(filter.CategoryId.Value);
+
+                if (category == null || category.IsDeleted || !category.IsActive)
+                    return new ApiResponse<PagedResult<ProductDto>>(
+                        404, "Category not found or inactive");
+            }
+
+            // 🔐 ColorId validation
+            if (filter.ColorId.HasValue && filter.ColorId.Value <= 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "ColorId must be greater than 0"
+                );
+            }
+
+            if (filter.ColorId.HasValue)
+            {
+                var color = await _colorRepository.GetByIdAsync(filter.ColorId.Value);
+
+                if (color == null || color.IsDeleted || !color.IsActive)
+                {
+                    return new ApiResponse<PagedResult<ProductDto>>(
+                        404,
+                        "Color not found or inactive"
+                    );
+                }
+            }
+
+            string? normalizedName = null;
+
+            if (!string.IsNullOrWhiteSpace(filter.Name))
+            {
+                normalizedName = filter.Name.Trim();
+            }
+
+            IQueryable<Product> query;
+
+            // 🔹 Base query (ONLY block deleted products)
+            query = _productRepository.Query()
+                .Where(p => !p.IsDeleted);
+
+            // 🔹 ProductId override (admin/debug use)
+            if (filter.ProductId.HasValue)
+            {
+                query = query.Where(p => p.Id == filter.ProductId.Value);
+            }
+
+            // 🔹 Apply IsActive filter ONLY if provided
+            if (filter.IsActive.HasValue)
+            {
+                query = query.Where(p => p.IsActive == filter.IsActive.Value);
+            }
+
+
+            query = query.Where(p =>
+                    (normalizedName == null ||
+                        EF.Functions.Like(p.Name, $"%{normalizedName}%", @"\")) &&
+                    (!filter.CategoryId.HasValue || p.CategoryId == filter.CategoryId) &&
+                     (!filter.ColorId.HasValue ||
+        p.AvailableColors.Any(pc => pc.ColorId == filter.ColorId.Value)) &&
+                    (!filter.MinPrice.HasValue || p.Price >= filter.MinPrice) &&
+                    (!filter.MaxPrice.HasValue || p.Price <= filter.MaxPrice) &&
+                    (!filter.InStock.HasValue || p.InStock == filter.InStock)
+                )
+                .Include(p => p.Category)
+                .Include(p => p.AvailableColors)
+                    .ThenInclude(pc => pc.Color);
+
+
+
+            query = filter.SortBy?.ToLower() switch
+            {
+                "price" => filter.Descending
+                    ? query.OrderByDescending(p => p.Price)
+                    : query.OrderBy(p => p.Price),
+
+                "name" => filter.Descending
+                    ? query.OrderByDescending(p => p.Name)
+                    : query.OrderBy(p => p.Name),
+
+                "createdon" or _ => filter.Descending
+                    ? query.OrderByDescending(p => p.CreatedOn)
+                    : query.OrderBy(p => p.CreatedOn)
+            };
 
             var totalCount = await query.CountAsync();
+
+            if (totalCount == 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    404,
+                    "No products founded for the given filters"
+                );
+            }
+            var products = await query
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            var result = new PagedResult<ProductDto>
+            {
+                Page = filter.Page,
+                PageSize = filter.PageSize,
+                TotalCount = totalCount,
+                Items = products.Select(MapToDTO)
+            };
+
+            return new ApiResponse<PagedResult<ProductDto>>(
+                200,
+                "Products fetched successfully",
+                result
+            );
+        }
+
+
+        //public async Task<ApiResponse<IEnumerable<ProductDto>>> GetFilteredProducts(
+        //    string? name,
+        //    int? categoryId,
+        //    decimal? minPrice,
+        //    decimal? maxPrice,
+        //    bool? inStock,
+        //    int page,
+        //    int pageSize,
+        //    string? sortBy,
+        //    bool descending)
+        //{
+        //    Expression<Func<Product, bool>> filter = p =>
+        //        p.IsActive &&
+        //        !p.IsDeleted &&
+        //        (string.IsNullOrEmpty(name) || p.Name.Contains(name)) &&
+        //        (!categoryId.HasValue || p.CategoryId == categoryId) &&
+        //        (!minPrice.HasValue || p.Price >= minPrice) &&
+        //        (!maxPrice.HasValue || p.Price <= maxPrice) &&
+        //        (!inStock.HasValue || p.InStock == inStock);
+
+        //    var products = await _productRepository.GetAllAsync(
+        //        predicate: filter,
+        //        include: q => q
+        //            .Include(p => p.Category)
+        //            .Include(p => p.AvailableColors)
+
+        //            .ThenInclude(pc => pc.Color)
+        //    );
+
+        //    return new ApiResponse<IEnumerable<ProductDto>>(
+        //        200,
+        //        "Products fetched",
+        //        products.Select(MapToDTO)
+        //    );
+        //}
+        public async Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(
+      int page = 1,
+      int pageSize = 10)
+        {
+            // 🔹 Hard validation (do NOT auto-fix silently)
+            if (page < 1)
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "Page number must be greater than or equal to 1"
+                );
+
+            if (pageSize < 1)
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "Page size must be greater than or equal to 1"
+                );
+
+            const int maxPageSize = 100;
+            if (pageSize > maxPageSize)
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    $"Page size cannot exceed {maxPageSize}"
+                );
+
+            var query = _productRepository.Query()
+                .Where(p => p.IsActive && !p.IsDeleted)
+                .Include(p => p.Category)
+                .Include(p => p.AvailableColors)
+                    .ThenInclude(pc => pc.Color);
+
+            var totalCount = await query.CountAsync();
+
+            if (totalCount == 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    200,
+                    "No products found",
+                    new PagedResult<ProductDto>
+                    {
+                        Page = page,
+                        PageSize = pageSize,
+                        TotalCount = 0,
+                        Items = Enumerable.Empty<ProductDto>()
+                    }
+                );
+            }
+
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            if (page > totalPages)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    $"Page number exceeds total pages ({totalPages})"
+                );
+            }
 
             var products = await query
                 .OrderByDescending(p => p.CreatedOn)
@@ -575,6 +780,7 @@ namespace Dominus.Application.Services
                 result
             );
         }
+
         private static ProductDto MapToDTO(Product p)
         {
             return new ProductDto
@@ -614,7 +820,61 @@ namespace Dominus.Application.Services
 
             };
         }
-        
+
+
+
+        public async Task<ApiResponse<ProductDto>> AddStockAsync(AddProductStockDto dto)
+        {
+            if (dto == null)
+                return new ApiResponse<ProductDto>(400, "Invalid stock data");
+
+            // 1️⃣ Get product
+            var product = await _repository.GetByIdAsync(dto.ProductId);
+
+            if (product == null || product.IsDeleted)
+                return new ApiResponse<ProductDto>(404, "Product not found");
+
+            // 2️⃣ Product must be active
+            if (!product.IsActive)
+                return new ApiResponse<ProductDto>(
+                    400,
+                    "Cannot add stock to an inactive product"
+                );
+
+            // 3️⃣ Prevent overflow / abuse
+            const int maxStockLimit = 1_000_000;
+
+            if (product.CurrentStock + dto.QuantityToAdd > maxStockLimit)
+                return new ApiResponse<ProductDto>(
+                    400,
+                    $"Stock limit exceeded. Max allowed: {maxStockLimit}"
+                );
+
+            // 4️⃣ Update stock
+            product.CurrentStock += dto.QuantityToAdd;
+            product.InStock = product.CurrentStock > 0;
+            product.ModifiedOn = DateTime.UtcNow;
+
+            _repository.Update(product);
+            await _repository.SaveChangesAsync();
+
+            // 5️⃣ Reload with relations
+            var updatedProduct = await _repository.GetAsync(
+                p => p.Id == product.Id,
+                include: q => q
+                    .Include(p => p.Category)
+                    .Include(p => p.AvailableColors)
+                    .ThenInclude(pc => pc.Color)
+            );
+
+            return new ApiResponse<ProductDto>(
+                200,
+                $"Stock added successfully (+{dto.QuantityToAdd})",
+                MapToDTO(updatedProduct!)
+            );
+        }
+
+
 
     }
 }

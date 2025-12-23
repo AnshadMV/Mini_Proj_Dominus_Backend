@@ -1,7 +1,8 @@
-﻿using Dominus.Domain.Common;
+﻿using Dominus.Application.Interfaces.IRepository;
+using Dominus.Application.Interfaces.IServices;
+using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.CategoryDTOs;
 using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
 
 
 namespace Dominus.Application.Services

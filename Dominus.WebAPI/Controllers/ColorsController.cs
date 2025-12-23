@@ -1,8 +1,8 @@
-﻿using Dominus.Application.Services;
+﻿using Dominus.Application.Interfaces.IServices;
+using Dominus.Application.Services;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Dominus.WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/colors")]
+    [Route("api/[controller]")]
     
     public class ColorsController : ControllerBase
     {
@@ -22,7 +22,7 @@ namespace Dominus.WebAPI.Controllers
             _colorService = colorService;
         }
 
-        [HttpGet]
+        [HttpGet("GetAll")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
@@ -30,7 +30,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpPost]
+        [HttpPost("Admin/Create")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateColorDto dto)
         {
@@ -41,7 +41,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpPut]
+        [HttpPut("Admin/Update")]
         [Authorize(Policy= "Admin")]
         public async Task<IActionResult> Update([FromBody]  UpdateColorDto dto)
         {
@@ -52,7 +52,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpPatch("status/{id:int}")]
+        [HttpPatch("Admin/toggle/status")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> ToggleStatus([FromRoute] int id)
         {
@@ -65,7 +65,7 @@ namespace Dominus.WebAPI.Controllers
 
 
 
-        [HttpDelete("{id}")]
+        [HttpDelete("Admin/Delete")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> DeleteColors(int id)
         {

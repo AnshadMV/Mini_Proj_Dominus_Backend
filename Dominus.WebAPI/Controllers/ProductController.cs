@@ -1,4 +1,5 @@
-﻿using Dominus.Application.Services;
+﻿using Dominus.Application.DTOs.ProductDTOs;
+using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ProductDTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -18,15 +19,23 @@ namespace Dominus.WebAPI.Controllers
         {
             _productService = productService;
         }
-        [HttpGet]
+        [HttpGet("GetAll")]
         [AllowAnonymous]
 
         public async Task<IActionResult> GetAll()
         {
             var products = await _productService.GetAllProductsAsync();
+            if (!products.Any())
+            {
+                return Ok(new ApiResponse<IEnumerable<ProductDto>>(
+                    404,
+                    "No products available",
+                    Enumerable.Empty<ProductDto>()
+                ));
+            }
             return Ok(new ApiResponse<object>(200, "Products fetched successfully", products));
         }
-        [HttpPost]
+        [HttpPost("Admin/Create")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Create([FromForm] CreateProductDto dto)
         {
@@ -36,7 +45,7 @@ namespace Dominus.WebAPI.Controllers
             var result = await _productService.AddProductAsync(dto);
             return StatusCode(result.StatusCode, result);
         }
-        [HttpPatch("status/{id}")]
+        [HttpPatch("Admin/Toggle")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> ToggleStatus([Range(1, int.MaxValue)] int id)
         {
@@ -52,14 +61,14 @@ namespace Dominus.WebAPI.Controllers
         //}
 
        
-        [HttpDelete("{id}")]
+        [HttpDelete("Admin/Delete")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
         {
             var result = await _productService.DeleteProductAsync(id);
             return StatusCode(result.StatusCode, result);
         }
-        [HttpPut]
+        [HttpPut("Admin/Update")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Update([FromForm] UpdateProductDto dto)
         {
@@ -73,7 +82,7 @@ namespace Dominus.WebAPI.Controllers
         
 
 
-        [HttpGet("ByCategory/{categoryId}")]
+        [HttpGet("GetBy_{categoryId}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetByCategory(int categoryId)
         {
@@ -85,7 +94,7 @@ namespace Dominus.WebAPI.Controllers
             return Ok(new ApiResponse<object>(200, "Products fetched successfully", products));
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetBy_{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
@@ -98,7 +107,7 @@ namespace Dominus.WebAPI.Controllers
         }
 
 
-        [HttpGet("paged")]
+        [HttpGet("Paged")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPaged(
                 [FromQuery] int page = 1,
@@ -108,27 +117,48 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpGet("filter")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetFilteredProducts(
-          [FromQuery] string? name,
-          [FromQuery] int? categoryId,
-          [FromQuery] decimal? minPrice,
-          [FromQuery] decimal? maxPrice,
-          [FromQuery] bool? inStock,
-          [FromQuery] int page = 1,
-          [FromQuery] int pageSize = 20,
-          [FromQuery] string? sortBy = null,
-          [FromQuery] bool descending = false)
-        {
-            var result = await _productService.GetFilteredProducts(
-                name, categoryId, minPrice, maxPrice, inStock, page, pageSize, sortBy, descending);
+        //[HttpGet("filter")]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GetFilteredProducts(
+        //  [FromQuery] string? name,
+        //  [FromQuery] int? categoryId,
+        //  [FromQuery] decimal? minPrice,
+        //  [FromQuery] decimal? maxPrice,
+        //  [FromQuery] bool? inStock,
+        //  [FromQuery] int page = 1,
+        //  [FromQuery] int pageSize = 20,
+        //  [FromQuery] string? sortBy = null,
+        //  [FromQuery] bool descending = false)
+        //{
+        //    var result = await _productService.GetFilteredProducts(
+        //        name, categoryId, minPrice, maxPrice, inStock, page, pageSize, sortBy, descending);
 
+        //    return StatusCode(result.StatusCode, result);
+        //}
+
+        [HttpGet("Filter")]
+        [AllowAnonymous]
+        public async Task<IActionResult> FilterProducts([FromQuery] ProductFilterDto filter)
+        {
+            var result = await _productService.GetFilteredProductsAsync(filter);
             return StatusCode(result.StatusCode, result);
         }
 
-        
-        
+        [HttpPatch("Admin/Add_Stock")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> AddStock(
+    [FromBody] AddProductStockDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ApiResponse<object>(
+                    400,
+                    "Invalid stock request"
+                ));
+
+            var result = await _productService.AddStockAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
 
     }
 }

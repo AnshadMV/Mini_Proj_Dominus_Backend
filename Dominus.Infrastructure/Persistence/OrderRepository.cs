@@ -24,6 +24,9 @@ namespace Dominus.Infrastructure.Persistence
                 .ToListAsync();
         }
 
+
+
+
         public async Task<Order?> GetByIdWithItemsAsync(int orderId)
         {
             return await _context.Orders
@@ -31,5 +34,51 @@ namespace Dominus.Infrastructure.Persistence
                 .ThenInclude(i => i.Product)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
+
+        public async Task<List<Order>> GetByUserAndProductAsync(
+    string userId,
+    int productId)
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                .Where(o =>
+                    o.UserId == userId &&
+                    o.Items.Any(i => i.ProductId == productId))
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
+
+
+
+
+
+
+
+        public async Task<List<Order>> GetAllWithItemsAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
+
+
+
+
+
+
+
+
+        public IQueryable<Order>  Query()
+        {
+            return _context.Orders
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                .OrderByDescending(o => o.OrderDate);
+        }
+
+
     }
 }

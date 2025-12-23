@@ -1,4 +1,5 @@
-﻿namespace Dominus.Domain.Entities
+﻿
+namespace Dominus.Domain.Entities
 {
     public class OrderItem : BaseEntity
     {

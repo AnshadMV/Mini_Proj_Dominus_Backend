@@ -1,6 +1,6 @@
 ﻿using Dominus.Domain.Entities;
 using Dominus.Domain.Common;
-namespace Dominus.Domain.Interfaces
+namespace Dominus.Application.Interfaces.IServices
 {
     public interface IUserService
     {

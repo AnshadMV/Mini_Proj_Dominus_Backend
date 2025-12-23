@@ -1,4 +1,4 @@
-﻿using Dominus.Application.Interfaces;
+﻿using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.DTOs.WishlistDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Dominus.WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/wishlist")]
+    [Route("api/[controller]")]
     [Authorize]
     public class WishlistController : ControllerBase
     {
@@ -18,15 +18,21 @@ namespace Dominus.WebAPI.Controllers
             _service = service;
         }
 
-        private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        private string UserId => User.FindFirstValue("userId")!;
 
-        [HttpGet]
+        
+     
+
+        [HttpGet("MyWishlist")]
         [Authorize(Policy = "user")]
-
         public async Task<IActionResult> Get()
-            => Ok(await _service.GetWishlistAsync(UserId));
+        {
+            var response = await _service.GetWishlistAsync(UserId);
+            return StatusCode(response.StatusCode, response);
+        }
 
-        [HttpPost("add")]
+
+        [HttpPost("ToggleBy_{Id}")]
         [Authorize(Policy = "user")]
         public async Task<IActionResult> Add(AddToWishlistDto dto)
         {
@@ -34,13 +40,13 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpDelete("item/{id}")]
-        [Authorize(Policy = "user")]
+        //[HttpDelete("item/{id}")]
+        //[Authorize(Policy = "user")]
 
-        public async Task<IActionResult> Remove(int id)
-            => Ok(await _service.RemoveAsync(UserId, id));
+        //public async Task<IActionResult> Remove(int id)
+        //    => Ok(await _service.RemoveAsync(UserId, id));
 
-        [HttpDelete("clear")]
+        [HttpDelete("Clear")]
         [Authorize(Policy = "user")]
 
         public async Task<IActionResult> Clear()

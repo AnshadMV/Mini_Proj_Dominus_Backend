@@ -5,7 +5,7 @@
 namespace Dominus.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddColorAuditDefaults : Migration
+    public partial class PaymentStatusChanged : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -10,7 +10,7 @@ namespace Dominus.Domain.DTOs.ColorDTOs
 {
     public class CreateColorDto
     {
-        [DefaultValue("Red/Blue...Color name")]
+        [DefaultValue("Colorname")]
         [Required]
         [RegularExpression(
             @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",

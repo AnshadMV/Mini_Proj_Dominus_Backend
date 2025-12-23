@@ -3,7 +3,7 @@ using Dominus.Domain.DTOs.CategoryDTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Dominus.Application.Services
+namespace Dominus.Application.Interfaces.IServices
 {
     public interface ICategoryService
     {

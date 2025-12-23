@@ -1,7 +1,8 @@
-﻿using Dominus.Domain.Common;
+﻿using Dominus.Application.Interfaces.IRepository;
+using Dominus.Application.Interfaces.IServices;
+using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
 
 namespace Dominus.Application.Services
 {
@@ -134,7 +135,7 @@ namespace Dominus.Application.Services
 
             //if (color.Id != null && color..Any(p => !p.IsDeleted))
             //    return new ApiResponse<string>(400, "Cannot delete color with existing products");
-
+            color.IsActive = false;
             _repository.Delete(color);
             await _repository.SaveChangesAsync();
 

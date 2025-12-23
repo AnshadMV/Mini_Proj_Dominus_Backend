@@ -1,5 +1,5 @@
-﻿using Dominus.Domain.Entities;
-using Dominus.Domain.Interfaces;
+﻿using Dominus.Application.Interfaces.IRepository;
+using Dominus.Domain.Entities;
 using Dominus.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Dominus.Domain.Interfaces
+namespace Dominus.Application.Interfaces.IRepository
 {
     public interface ICategoryRepository : IGenericRepository<Category>
     {

@@ -81,7 +81,16 @@ namespace Dominus.Infrastructure.Data
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Product>()
+    .HasIndex(p => new { p.IsActive, p.IsDeleted });
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => p.CategoryId);
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => p.Price);
 
 
             modelBuilder.Entity<Cart>()
@@ -116,8 +125,73 @@ namespace Dominus.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(i => i.ProductId);
 
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.Property(o => o.TotalAmount)
+                      .HasPrecision(18, 2);
+            });
 
+            modelBuilder.Entity<OrderItem>(entity =>
+            {
+                entity.Property(oi => oi.Price)
+                      .HasPrecision(18, 2);
+            });
+            modelBuilder.Entity<CartItem>()
+    .HasQueryFilter(ci => !ci.IsDeleted);
+
+            modelBuilder.Entity<Cart>()
+                .HasQueryFilter(c => !c.IsDeleted);
+            modelBuilder.Entity<Wishlist>()
+    .HasQueryFilter(w => !w.IsDeleted);
+
+            modelBuilder.Entity<WishlistItem>()
+                .HasQueryFilter(wi => !wi.IsDeleted);
+            //        modelBuilder.Entity<Order>()
+            //.Property(o => o.Status)
+            //.HasConversion<string>()   
+            //.HasMaxLength(30);          
+
+          
 
         }
+
+        public override async Task<int> SaveChangesAsync(
+    CancellationToken cancellationToken = default)
+        {
+            var entries = ChangeTracker.Entries<BaseEntity>();
+
+            foreach (var entry in entries)
+            {
+                // 🟢 CREATE
+                if (entry.State == EntityState.Added)
+                {
+                    entry.Entity.CreatedOn = DateTime.UtcNow;
+                    entry.Entity.CreatedBy ??= "system";
+                }
+
+                // 🔴 SOFT DELETE (IsDeleted changed)
+                else if (entry.State == EntityState.Modified &&
+                         entry.OriginalValues.GetValue<bool>(nameof(BaseEntity.IsDeleted)) == false &&
+                         entry.CurrentValues.GetValue<bool>(nameof(BaseEntity.IsDeleted)) == true)
+                {
+                    entry.Entity.DeletedOn = DateTime.UtcNow;
+                    entry.Entity.DeletedBy ??= "system";
+
+                    // ❗ DO NOT update ModifiedOn for deletes
+                    entry.Entity.ModifiedOn = null;
+                }
+
+                // 🟡 NORMAL UPDATE
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.ModifiedOn = DateTime.UtcNow;
+                    entry.Entity.ModifiedBy ??= "system";
+                }
+            }
+
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+
     }
 }

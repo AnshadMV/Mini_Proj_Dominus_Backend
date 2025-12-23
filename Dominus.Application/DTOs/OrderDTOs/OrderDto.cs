@@ -9,6 +9,10 @@ namespace Dominus.Domain.DTOs.OrderDTOs
         public DateTime OrderDate { get; set; }
         public string Status { get; set; } = null!;
         public decimal TotalAmount { get; set; }
+        public string ShippingAddress { get; set; } = null!;
+
+        public string UserId { get; set; } = null!;
+
         public List<OrderItemDto> Items { get; set; } = new();
     }
 }

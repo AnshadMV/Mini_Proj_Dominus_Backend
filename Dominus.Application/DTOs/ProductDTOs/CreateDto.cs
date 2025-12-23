@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Dominus.Domain.DTOs.ProductDTOs
@@ -28,6 +29,7 @@ namespace Dominus.Domain.DTOs.ProductDTOs
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
         public decimal Price { get; set; }
 
+        //public List<IFormFile> Images { get; set; } = new();
         public int CategoryId { get; set; }
         [DefaultValue("")]
 

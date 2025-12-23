@@ -1,4 +1,4 @@
-﻿using Dominus.Application.Interfaces;
+﻿using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.DTOs.CartDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Dominus.WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/cart")]
+    [Route("api/[controller]")]
     [Authorize(Roles = "user")]
     public class CartController : ControllerBase
     {
@@ -17,9 +17,9 @@ namespace Dominus.WebAPI.Controllers
             _service = service;
         }
 
-        private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        private string UserId => User.FindFirstValue("userId")!;
 
-        [HttpGet]
+        [HttpGet("myCart")]
         public async Task<IActionResult> GetCart()
             => Ok(await _service.GetCartByUserAsync(UserId));
 
@@ -29,12 +29,12 @@ namespace Dominus.WebAPI.Controllers
             var response = await _service.AddToCartAsync(UserId, dto);
             return StatusCode(response.StatusCode, response);
         }
-        [HttpPut("item")]
+        [HttpPut("update")]
 
         public async Task<IActionResult> Update(UpdateCartItemDto dto)
             => Ok(await _service.UpdateItemAsync(UserId, dto));
 
-        [HttpDelete("item/{id}")]
+        [HttpDelete("delete/{id}")]
 
         public async Task<IActionResult> Remove(int id)
             => Ok(await _service.RemoveItemAsync(UserId, id));
