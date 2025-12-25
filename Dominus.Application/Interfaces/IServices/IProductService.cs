@@ -24,7 +24,7 @@ namespace Dominus.Application.Interfaces.IServices
         Task<ApiResponse<string>> ToggleProductStatusAsync(int id);
         Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(int page = 1, int pageSize = 10);
         Task<ApiResponse<PagedResult<ProductDto>>>  GetFilteredProductsAsync(ProductFilterDto filter);
-        Task<ApiResponse<PagedResult<ProductDto>>>SearchProductsByNameAsync(string keyword, int page = 1, int pageSize = 10);
+        Task<ApiResponse<PagedResult<ProductDto>>>SearchProductsByNameAsync(string search, int page = 1, int pageSize = 10);
 
 
     }

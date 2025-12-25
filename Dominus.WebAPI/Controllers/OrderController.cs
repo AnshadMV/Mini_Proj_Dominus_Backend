@@ -65,15 +65,22 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpGet("Admin/GetAllOrders")]
+        [HttpGet("Admin/GetAll_Orders")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> GetAllOrdersForAdmin(
-    [FromQuery] int page = 1,
-    [FromQuery] int pageSize = 10)
+     [FromQuery] int page = 1,
+     [FromQuery] int pageSize = 10,
+     [FromQuery] OrderStatus? status = null)
         {
-            var response = await _service.GetAllOrdersForAdminAsync(page, pageSize);
+            var response = await _service.GetAllOrdersForAdminAsync(
+                page,
+                pageSize,
+                status
+            );
+
             return StatusCode(response.StatusCode, response);
         }
+
 
 
 

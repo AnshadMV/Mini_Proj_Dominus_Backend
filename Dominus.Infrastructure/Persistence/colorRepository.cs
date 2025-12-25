@@ -30,6 +30,12 @@ namespace Dominus.Infrastructure.Persistence
                 .Where(c => ids.Contains(c.Id))
                 .ToListAsync();
         }
+        public async Task<Color?> GetByHexAsync(string hex)
+        {
+            return await _context.Colors
+                .FirstOrDefaultAsync(c => c.HexCode == hex && !c.IsDeleted);
+        }
+
     }
 
 }

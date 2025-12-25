@@ -3,6 +3,7 @@ using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
+using System.Text.RegularExpressions;
 
 namespace Dominus.Application.Services
 {
@@ -17,6 +18,28 @@ namespace Dominus.Application.Services
             //_genericRepo = genericRepo;
         }
 
+
+        private static string NormalizeHex(string hex)
+        {
+            if (string.IsNullOrWhiteSpace(hex))
+                throw new ArgumentException("Hex code cannot be empty");
+
+            hex = hex.Trim();
+
+            if (!hex.StartsWith("#"))
+                hex = "#" + hex;
+
+            if (!Regex.IsMatch(hex, @"^#[0-9a-fA-F]{6}$"))
+                throw new ArgumentException("Hex code must be in #RRGGBB format");
+
+            return hex.ToLowerInvariant();
+        }
+
+
+
+
+
+
         public async Task<ApiResponse<ColorDto>> CreateAsync(CreateColorDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
@@ -25,19 +48,30 @@ namespace Dominus.Application.Services
             if (string.IsNullOrWhiteSpace(dto.HexCode))
                 return new ApiResponse<ColorDto>(400, "Hex code cannot be empty");
 
-            var name = dto.Name.Trim();
-            var hex = dto.HexCode.Trim();
+            var name = dto.Name.Trim(); 
+            var normalizedName = name.ToLower();
+            string hex;
+            try
+            {
+                hex = NormalizeHex(dto.HexCode);
+            }
+            catch (ArgumentException ex)
+            {
+                return new ApiResponse<ColorDto>(400, ex.Message);
+            }
+            var nameExists = await _repository.GetByNameAsync(normalizedName);
+            if (nameExists != null)
+                return new ApiResponse<ColorDto>(409, "Color name already exists");
 
-            var exists = await _repository.GetByNameAsync(name);
-            if (exists != null)
-                return new ApiResponse<ColorDto>(409, "Color already exists");
+            var hexExists = await _repository.GetByHexAsync(hex);
+            if (hexExists != null)
+                return new ApiResponse<ColorDto>(409, "Hex code already exists");
 
             var color = new Color
             {
                 Name = name,
                 HexCode = hex,
                 IsActive = true
-                // ✅ audit fields handled by DB defaults
             };
 
             await _repository.AddAsync(color);
@@ -49,36 +83,50 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<ColorDto>> UpdateAsync(UpdateColorDto dto)
         {
+            if (dto.Id <= 0)
+                return new ApiResponse<ColorDto>(400, "Invalid color id");
+
             var color = await _repository.GetByIdAsync(dto.Id);
-            if (color == null)
-                return new ApiResponse<ColorDto>(409, "Color not found");
+            if (color == null || color.IsDeleted)
+                return new ApiResponse<ColorDto>(404, "Color not found");
 
-            if (!string.IsNullOrWhiteSpace(dto.Name))
-                color.Name = dto.Name.Trim();
-
-            if (!string.IsNullOrWhiteSpace(dto.HexCode))
-                color.HexCode = dto.HexCode.Trim();
-
-            if (dto.IsActive.HasValue)
-            {
-                color.IsActive = dto.IsActive.Value;
-            }
-
+            // 🔹 NAME update + uniqueness (exclude same ID)
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
                 var trimmedName = dto.Name.Trim();
 
-                var existing = await _repository.GetByNameAsync(trimmedName);
-
-                if (existing != null && existing.Id != dto.Id)
+                var existingName = await _repository.GetByNameAsync(trimmedName);
+                if (existingName != null && existingName.Id != dto.Id)
                     return new ApiResponse<ColorDto>(409, "Color name already exists");
 
                 color.Name = trimmedName;
             }
 
+            // 🔹 HEX update + normalize + uniqueness (exclude same ID)
             if (!string.IsNullOrWhiteSpace(dto.HexCode))
             {
-                color.HexCode = dto.HexCode.Trim();
+                string normalizedHex;
+
+                try
+                {
+                    normalizedHex = NormalizeHex(dto.HexCode);
+                }
+                catch (ArgumentException ex)
+                {
+                    return new ApiResponse<ColorDto>(400, ex.Message);
+                }
+
+                var existingHex = await _repository.GetByHexAsync(normalizedHex);
+                if (existingHex != null && existingHex.Id != dto.Id)
+                    return new ApiResponse<ColorDto>(409, "Hex code already exists");
+
+                color.HexCode = normalizedHex;
+            }
+
+            // 🔹 Status update
+            if (dto.IsActive.HasValue)
+            {
+                color.IsActive = dto.IsActive.Value;
             }
 
             _repository.Update(color);
@@ -86,6 +134,7 @@ namespace Dominus.Application.Services
 
             return new ApiResponse<ColorDto>(200, "Color updated", Map(color));
         }
+
 
 
         public async Task<ApiResponse<IEnumerable<ColorDto>>> GetAllAsync()

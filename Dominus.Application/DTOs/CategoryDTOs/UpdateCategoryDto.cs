@@ -13,10 +13,10 @@ namespace Dominus.Domain.DTOs.CategoryDTOs
         [DefaultValue("Updated name")]
         [Required]
         [MaxLength(100)]
-        [RegularExpression(
-            @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
-            ErrorMessage = "Category name must contain only letters and spaces"
-        )]
+        //[RegularExpression(
+        //    @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
+        //    ErrorMessage = "Category name must contain only letters and spaces"
+        //)]
         public string Name { get; set; } = "Mobile";
 
         [MaxLength(500)]

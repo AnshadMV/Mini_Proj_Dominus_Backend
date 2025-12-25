@@ -45,7 +45,7 @@ namespace Dominus.WebAPI.Controllers
             var result = await _productService.AddProductAsync(dto);
             return StatusCode(result.StatusCode, result);
         }
-        [HttpPatch("Admin/Toggle")]
+        [HttpPatch("Admin/Toggle{id}")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> ToggleStatus([Range(1, int.MaxValue)] int id)
         {
@@ -61,7 +61,7 @@ namespace Dominus.WebAPI.Controllers
         //}
 
        
-        [HttpDelete("Admin/Delete")]
+        [HttpDelete("Admin/Delete{id}")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
         {
@@ -82,7 +82,7 @@ namespace Dominus.WebAPI.Controllers
         
 
 
-        [HttpGet("GetBy_{categoryId}")]
+        [HttpGet("GetCatBy_{categoryId}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetByCategory(int categoryId)
         {
@@ -136,7 +136,7 @@ namespace Dominus.WebAPI.Controllers
         //    return StatusCode(result.StatusCode, result);
         //}
 
-        [HttpGet("Filter")]
+        [HttpGet("Filter_Sort")]
         [AllowAnonymous]
         public async Task<IActionResult> FilterProducts([FromQuery] ProductFilterDto filter)
         {
@@ -156,6 +156,21 @@ namespace Dominus.WebAPI.Controllers
                 ));
 
             var result = await _productService.AddStockAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
+
+
+        [HttpGet("Search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Search(
+    [FromQuery] string search,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 10)
+        {
+            var result = await _productService
+                .SearchProductsByNameAsync(search, page, pageSize);
+
             return StatusCode(result.StatusCode, result);
         }
 

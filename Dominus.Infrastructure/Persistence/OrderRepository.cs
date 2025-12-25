@@ -19,6 +19,8 @@ namespace Dominus.Infrastructure.Persistence
             return await _context.Orders
                 .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+                 .Include(o => o.Items)
+        .ThenInclude(i => i.Color)
                 .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
@@ -32,6 +34,8 @@ namespace Dominus.Infrastructure.Persistence
             return await _context.Orders
                 .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+                 .Include(o => o.Items)
+        .ThenInclude(i => i.Color)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
 
@@ -42,6 +46,8 @@ namespace Dominus.Infrastructure.Persistence
             return await _context.Orders
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Product)
+                    .Include(o => o.Items)
+        .ThenInclude(i => i.Color)
                 .Where(o =>
                     o.UserId == userId &&
                     o.Items.Any(i => i.ProductId == productId))
@@ -76,6 +82,8 @@ namespace Dominus.Infrastructure.Persistence
             return _context.Orders
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Product)
+                     .Include(o => o.Items)
+            .ThenInclude(i => i.Color)
                 .OrderByDescending(o => o.OrderDate);
         }
 

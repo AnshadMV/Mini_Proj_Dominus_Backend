@@ -11,7 +11,11 @@ namespace Dominus.Application.Interfaces.IServices
     {
         Task<AuthResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto);
         Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequestDto);
+        Task<AuthResponseDto> LogoutAsync(string refreshToken);
+
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
         Task<bool> RevokeTokenAsync(string refreshToken);
+        Task<AuthResponseDto> GenerateAccessTokenFromRefreshAsync(string refreshToken);
+
     }
 }

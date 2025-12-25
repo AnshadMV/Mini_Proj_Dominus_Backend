@@ -151,7 +151,12 @@ namespace Dominus.Infrastructure.Data
             //.HasConversion<string>()   
             //.HasMaxLength(30);          
 
-          
+            modelBuilder.Entity<OrderItem>()
+    .HasOne(oi => oi.Color)
+    .WithMany()
+    .HasForeignKey(oi => oi.ColorId)
+    .OnDelete(DeleteBehavior.Restrict);
+
 
         }
 

@@ -52,7 +52,7 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpPatch("Admin/toggle/status")]
+        [HttpPatch("Admin/toggle/status{id}")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> ToggleStatus([FromRoute] int id)
         {
@@ -65,7 +65,7 @@ namespace Dominus.WebAPI.Controllers
 
 
 
-        [HttpDelete("Admin/Delete")]
+        [HttpDelete("Admin/Delete{id}")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> DeleteColors(int id)
         {

@@ -14,6 +14,8 @@ namespace Dominus.Application.Interfaces.IRepository
     {
         Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId);
         Task<Product?> GetProductWithDetailsAsync(int id);
+        Task<Product?> GetByIdWithColorsAsync(int id);
+        Task<Product?> GetByIdTrackedAsync(int id);
 
     }
 }

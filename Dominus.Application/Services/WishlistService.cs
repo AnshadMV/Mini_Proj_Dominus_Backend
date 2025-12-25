@@ -23,7 +23,6 @@ namespace Dominus.Application.Services
         public async Task<ApiResponse<WishlistDto>> GetWishlistAsync(string userId)
         {
 
-            // 1️⃣ UserId validation
             if (string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResponse<WishlistDto>(
@@ -32,23 +31,21 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 2️⃣ Fetch wishlist
             var wishlist = await _wishlistRepo.GetByUserIdAsync(userId);
 
             if (wishlist == null)
             {
                 return new ApiResponse<WishlistDto>(
-                    200,
+                    201,
                     "Wishlist is empty",
                     new WishlistDto { UserId = userId }
                 );
             }
 
-            // 3️⃣ No items
             if (!wishlist.Items.Any())
             {
                 return new ApiResponse<WishlistDto>(
-                    200,
+                    201,
                     "No items in wishlist",
                     new WishlistDto
                     {
@@ -61,7 +58,6 @@ namespace Dominus.Application.Services
             var validItems = new List<WishlistItemDto>();
             var warnings = new List<string>();
 
-            // 4️⃣ Product-level validation
             foreach (var item in wishlist.Items)
             {
                 var product = item.Product;
@@ -81,11 +77,10 @@ namespace Dominus.Application.Services
                 });
             }
 
-            // 5️⃣ All items invalid
             if (!validItems.Any())
             {
                 return new ApiResponse<WishlistDto>(
-                    200,
+                    201,
                     "All wishlist items are unavailable",
                     new WishlistDto
                     {
@@ -95,7 +90,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 6️⃣ Final response
             return new ApiResponse<WishlistDto>(
                 200,
                 warnings.Any()
@@ -111,26 +105,17 @@ namespace Dominus.Application.Services
         }
 
 
-        public async Task<ApiResponse<WishlistDto>> AddAsync(string userId, AddToWishlistDto dto)
+        public async Task<ApiResponse<WishlistDto>> ToggleAsync(string userId, int productId)
         {
-            var product = await _productRepo.GetByIdAsync(dto.ProductId);
+            var product = await _productRepo.GetByIdAsync(productId);
 
             if (product == null || product.IsDeleted || !product.IsActive)
             {
-                return new ApiResponse<WishlistDto>(
-                    404,
-                    "Product not found"
-                );
+                return new ApiResponse<WishlistDto>(404, "Product not found");
             }
-            //if (!product.InStock || product.CurrentStock < 0)
-            //{
-            //    return new ApiResponse<WishlistDto>(
-            //        400,
-            //        "Product out of stock"
-            //    );
-            //}
 
             var wishlist = await _wishlistRepo.GetByUserIdAsync(userId);
+
             if (wishlist != null && wishlist.IsDeleted)
             {
                 return new ApiResponse<WishlistDto>(
@@ -138,6 +123,7 @@ namespace Dominus.Application.Services
                     "Wishlist is deleted and cannot be modified"
                 );
             }
+
             if (wishlist == null)
             {
                 wishlist = new Wishlist { UserId = userId };
@@ -145,42 +131,41 @@ namespace Dominus.Application.Services
                 await _wishlistRepo.SaveChangesAsync();
             }
 
-            var existingItem = wishlist.Items   
-                .FirstOrDefault(i => i.ProductId == dto.ProductId);
+            var existingItem = wishlist.Items
+                .FirstOrDefault(i => i.ProductId == productId);
 
             if (existingItem != null)
             {
                 wishlist.Items.Remove(existingItem);
                 await _wishlistRepo.SaveChangesAsync();
 
-                var reloadedAfterRemove =
-                    await _wishlistRepo.GetByUserIdAsync(userId);
+                var refreshed = await _wishlistRepo.GetByUserIdAsync(userId);
 
                 return new ApiResponse<WishlistDto>(
-                    200,
+                    201,
                     "Product removed from wishlist",
-                    reloadedAfterRemove == null
+                    refreshed == null
                         ? new WishlistDto { UserId = userId }
-                        : Map(reloadedAfterRemove)
+                        : Map(refreshed)
                 );
             }
 
             wishlist.Items.Add(new WishlistItem
             {
-                ProductId = dto.ProductId
+                ProductId = productId
             });
 
             await _wishlistRepo.SaveChangesAsync();
 
-            var reloadedAfterAdd =
-                await _wishlistRepo.GetByUserIdAsync(userId);
+            var reloaded = await _wishlistRepo.GetByUserIdAsync(userId);
 
             return new ApiResponse<WishlistDto>(
                 200,
                 "Product added to wishlist",
-                Map(reloadedAfterAdd!)
+                Map(reloaded!)
             );
         }
+
 
 
         //public async Task<ApiResponse<bool>> RemoveAsync(string userId, int wishlistItemId)
@@ -203,30 +188,26 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<bool>> ClearAsync(string userId)
         {
-            // 1️⃣ Fetch wishlist
             var wishlist = await _wishlistRepo.GetByUserIdAsync(userId);
 
             if (wishlist == null)
                 return new ApiResponse<bool>(404, "Wishlist not found", false);
 
-            // 2️⃣ Get active (non-deleted) items
             var activeItems = wishlist.Items
                 .Where(i => !i.IsDeleted)
                 .ToList();
 
             if (!activeItems.Any())
-                return new ApiResponse<bool>(200, "Wishlist already empty", true);
+                return new ApiResponse<bool>(201, "Wishlist already empty", true);
 
-            // 3️⃣ Soft delete items
             foreach (var item in activeItems)
             {
                 item.IsDeleted = true;
             }
 
-            // 4️⃣ Save
             await _wishlistRepo.SaveChangesAsync();
 
-            return new ApiResponse<bool>(200, "Wishlist cleared", true);
+            return new ApiResponse<bool>(201, "Wishlist cleared", true);
         }
 
 

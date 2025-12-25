@@ -12,7 +12,7 @@ namespace Dominus.Application.Interfaces.IServices
         Task<ApiResponse<List<OrderDto>>> GetOrdersByProductAsync(int productId,string userId);
         Task<ApiResponse<object>> PayForOrderAsync(string userId,int orderId, PaymentDto dto);
         Task<ApiResponse<object>> AdminUpdateOrderStatusAsync(int orderId, OrderStatus status);
-        Task<ApiResponse<PagedResult<OrderDto>>> GetAllOrdersForAdminAsync(int page,int pageSize)
+        Task<ApiResponse<PagedResult<OrderDto>>> GetAllOrdersForAdminAsync(int page,int pageSize, OrderStatus? status)
             ;
 
 

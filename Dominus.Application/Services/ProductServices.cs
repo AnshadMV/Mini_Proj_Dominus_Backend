@@ -467,11 +467,12 @@ namespace Dominus.Application.Services
             var products = await _productRepository.GetAllAsync(
                 include: q => q
                     .Include(p => p.Category)
+                    .Where(c=> c.IsActive)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
             return products
-                .Where(p =>  !p.IsDeleted)
+                .Where(p =>  !p.IsDeleted )
                 .Select(MapToDTO);
         }
 
@@ -549,7 +550,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 🔐 Category validation    
             if (filter.CategoryId.HasValue)
             {
                 var category = await _categoryRepository.GetByIdAsync(filter.CategoryId.Value);
@@ -559,7 +559,6 @@ namespace Dominus.Application.Services
                         404, "Category not found or inactive");
             }
 
-            // 🔐 ColorId validation
             if (filter.ColorId.HasValue && filter.ColorId.Value <= 0)
             {
                 return new ApiResponse<PagedResult<ProductDto>>(
@@ -590,17 +589,14 @@ namespace Dominus.Application.Services
 
             IQueryable<Product> query;
 
-            // 🔹 Base query (ONLY block deleted products)
             query = _productRepository.Query()
                 .Where(p => !p.IsDeleted);
 
-            // 🔹 ProductId override (admin/debug use)
             if (filter.ProductId.HasValue)
             {
                 query = query.Where(p => p.Id == filter.ProductId.Value);
             }
 
-            // 🔹 Apply IsActive filter ONLY if provided
             if (filter.IsActive.HasValue)
             {
                 query = query.Where(p => p.IsActive == filter.IsActive.Value);
@@ -707,7 +703,6 @@ namespace Dominus.Application.Services
       int page = 1,
       int pageSize = 10)
         {
-            // 🔹 Hard validation (do NOT auto-fix silently)
             if (page < 1)
                 return new ApiResponse<PagedResult<ProductDto>>(
                     400,
@@ -828,20 +823,17 @@ namespace Dominus.Application.Services
             if (dto == null)
                 return new ApiResponse<ProductDto>(400, "Invalid stock data");
 
-            // 1️⃣ Get product
             var product = await _repository.GetByIdAsync(dto.ProductId);
 
             if (product == null || product.IsDeleted)
                 return new ApiResponse<ProductDto>(404, "Product not found");
 
-            // 2️⃣ Product must be active
             if (!product.IsActive)
                 return new ApiResponse<ProductDto>(
                     400,
                     "Cannot add stock to an inactive product"
                 );
 
-            // 3️⃣ Prevent overflow / abuse
             const int maxStockLimit = 1_000_000;
 
             if (product.CurrentStock + dto.QuantityToAdd > maxStockLimit)
@@ -850,7 +842,6 @@ namespace Dominus.Application.Services
                     $"Stock limit exceeded. Max allowed: {maxStockLimit}"
                 );
 
-            // 4️⃣ Update stock
             product.CurrentStock += dto.QuantityToAdd;
             product.InStock = product.CurrentStock > 0;
             product.ModifiedOn = DateTime.UtcNow;
@@ -858,7 +849,6 @@ namespace Dominus.Application.Services
             _repository.Update(product);
             await _repository.SaveChangesAsync();
 
-            // 5️⃣ Reload with relations
             var updatedProduct = await _repository.GetAsync(
                 p => p.Id == product.Id,
                 include: q => q
@@ -875,6 +865,64 @@ namespace Dominus.Application.Services
         }
 
 
+        public async Task<ApiResponse<PagedResult<ProductDto>>>
+    SearchProductsByNameAsync(string search, int page = 1, int pageSize = 10)
+        {
+            if (string.IsNullOrWhiteSpace(search))
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    400,
+                    "Search keyword cannot be empty"
+                );
+            }
+
+            search = search.Trim();
+
+            if (page < 1)
+                return new ApiResponse<PagedResult<ProductDto>>(400, "Page must be >= 1");
+
+            if (pageSize < 1 || pageSize > 100)
+                return new ApiResponse<PagedResult<ProductDto>>(400, "PageSize must be between 1 and 100");
+
+            var query = _productRepository.Query()
+                .Where(p =>
+                    !p.IsDeleted &&
+                    
+                    EF.Functions.Like(p.Name, $"%{search}%"))
+                .Include(p => p.Category)
+                .Include(p => p.AvailableColors)
+                    .ThenInclude(pc => pc.Color);
+
+            var totalCount = await query.CountAsync();
+
+            if (totalCount == 0)
+            {
+                return new ApiResponse<PagedResult<ProductDto>>(
+                    404,
+                    $"No products found matching '{search}'"
+                );
+            }
+
+            var products = await query
+                .OrderByDescending(p => p.CreatedOn)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = new PagedResult<ProductDto>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                Items = products.Select(MapToDTO)
+            };
+
+            return new ApiResponse<PagedResult<ProductDto>>(
+                200,
+                "Products fetched successfully",
+                result
+            );
+        }
 
     }
 }

@@ -17,13 +17,15 @@ namespace Dominus.Domain.DTOs.ColorDTOs
 
         [DefaultValue("Updatedname")]
         [Required]
-        [RegularExpression(
-            @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
-            ErrorMessage = "Category name must contain only letters and spaces"
-        )]
+        //[RegularExpression(
+        //    @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
+        //    ErrorMessage = "Collor name must contain only letters and spaces"
+        //)]
         public string? Name { get; set; } = null!;
 
         [Required]
+        [DefaultValue("#FFAA33")]
+
         public string? HexCode { get; set; } = null!;
 
         public bool? IsActive { get; set; }

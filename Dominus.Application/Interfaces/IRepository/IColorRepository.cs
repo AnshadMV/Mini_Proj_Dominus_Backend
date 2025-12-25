@@ -11,6 +11,7 @@ namespace Dominus.Application.Interfaces.IRepository
     {
         Task<Color?> GetByNameAsync(string name);
         Task<List<Color>> GetByIdsAsync(List<int> ids);
+        Task<Color?> GetByHexAsync(string hex);
     }
 
 }

@@ -38,6 +38,60 @@ namespace   Dominus.WebAPI.Controllers
                 refreshToken = result.RefreshToken
             });
         }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return BadRequest(new
+                {
+                    message = "Refresh token missing"
+                });
+            }
+
+            var response = await _authService.LogoutAsync(refreshToken);
+
+            if (response.StatusCode != 200)
+                return StatusCode(response.StatusCode, response);
+
+            DeleteTokenCookies();
+
+            return Ok(new
+            {
+                message = response.Message
+            });
+        }
+        [HttpPost("Token/Refresh-Access")]
+        public async Task<IActionResult> GetNewAccessToken()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return Unauthorized(new
+                {
+                    message = "Refresh token missing"
+                });
+            }
+
+            var result = await _authService.GenerateAccessTokenFromRefreshAsync(refreshToken);
+
+            if (result.StatusCode != 200)
+                return StatusCode(result.StatusCode, result);
+
+            SetTokenCookies(result.AccessToken, null);
+
+            return Ok(new
+            {
+                message = result.Message,
+                accessToken = result.AccessToken
+            });
+        }
+
+        
 
 
         //[HttpPost("refresh-token")]
@@ -98,11 +152,16 @@ namespace   Dominus.WebAPI.Controllers
                 });
             }
         }
-
         private void DeleteTokenCookies()
         {
             Response.Cookies.Delete("accessToken");
             Response.Cookies.Delete("refreshToken");
         }
+
+        //private void DeleteTokenCookies()
+        //{
+        //    Response.Cookies.Delete("accessToken");
+        //    Response.Cookies.Delete("refreshToken");
+        //}
     }
 }

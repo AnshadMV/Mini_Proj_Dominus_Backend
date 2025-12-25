@@ -12,12 +12,12 @@ namespace Dominus.Domain.DTOs.ColorDTOs
     {
         [DefaultValue("Colorname")]
         [Required]
-        [RegularExpression(
-            @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
-            ErrorMessage = "Category name must contain only letters and spaces"
-        )]
+        //[RegularExpression(
+        //    @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
+        //    ErrorMessage = "Color name must contain only letters and spaces"
+        //)]
         public string Name { get; set; } = null!;
-        [DefaultValue("Eg:#fff0000")]
+        [DefaultValue("#FFAA33")]
 
         [Required]
         public string HexCode { get; set; } = null!;

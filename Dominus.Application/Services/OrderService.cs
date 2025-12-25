@@ -16,14 +16,18 @@ namespace Dominus.Application.Services
     {
         private readonly IOrderRepository _orderRepo;
         private readonly IProductRepository _productRepo;
+        private readonly IColorRepository _colorRepo;
 
         public OrderService(
             IOrderRepository orderRepo,
-            IProductRepository productRepo)
+            IProductRepository productRepo,
+            IColorRepository colorRepo)
         {
             _orderRepo = orderRepo;
             _productRepo = productRepo;
+            _colorRepo = colorRepo;
         }
+
 
         public async Task<ApiResponse<OrderDto>> CreateOrderAsync(
             string userId,
@@ -53,12 +57,12 @@ namespace Dominus.Application.Services
 
             foreach (var item in dto.Items)
             {
-                var product = await _productRepo.GetByIdAsync(item.ProductId);
+                var product = await _productRepo.GetByIdWithColorsAsync(item.ProductId);
 
-                if (product == null)
+                if (product == null || product.IsDeleted)
                     return new ApiResponse<OrderDto>(404, "Product not found");
 
-                if (!product.IsActive || !product.InStock)
+                if (!product.IsActive || product.CurrentStock <= 0)
                     return new ApiResponse<OrderDto>(400, $"{product.Name} is not available");
 
                 if (product.CurrentStock < item.Quantity)
@@ -70,10 +74,29 @@ namespace Dominus.Application.Services
                 //product.CurrentStock -= item.Quantity;
                 //product.InStock = product.CurrentStock > 0;
 
+                var color = await _colorRepo.GetByIdAsync(item.ColorId);
+
+                if (color == null || color.IsDeleted)
+                    return new ApiResponse<OrderDto>(404, "Selected color not found");
+
+                if (!color.IsActive)
+                    return new ApiResponse<OrderDto>(400, "Selected color is inactive");
+
+                var colorMappedToProduct = product.AvailableColors
+                    .Any(pc => pc.ColorId == item.ColorId && !pc.IsDeleted);
+
+                if (!colorMappedToProduct)
+                    return new ApiResponse<OrderDto>(
+                        400,
+                        $"Color not available for {product.Name}"
+                    );
+
+
                 order.Items.Add(new OrderItem
                 {
                     ProductId = product.Id,
                     Quantity = item.Quantity,
+                    ColorId = color.Id,
                     Price = product.Price
                 });
 
@@ -86,7 +109,7 @@ namespace Dominus.Application.Services
             await _orderRepo.SaveChangesAsync();
 
             return new ApiResponse<OrderDto>(
-                201,
+                200,
                 "Order placed successfully",
                 Map(order)
             );
@@ -138,6 +161,11 @@ namespace Dominus.Application.Services
             {
                 ProductId = i.ProductId,
                 ProductName = i.Product?.Name ?? "Unknown",
+
+                ColorId = i.ColorId,
+                ColorName = i.Color?.Name ?? "Unknown",
+                HexCode = i.Color?.HexCode ?? "#000",
+
                 Quantity = i.Quantity,
                 Price = i.Price
             }).ToList()
@@ -159,7 +187,7 @@ namespace Dominus.Application.Services
 
             foreach (var item in order.Items)
             {
-                var product = await _productRepo.GetByIdAsync(item.ProductId);
+                var product = await _productRepo.GetByIdTrackedAsync(item.ProductId);
 
                 if (product == null || product.IsDeleted || !product.IsActive)
                     return new ApiResponse<object>(400, "Product unavailable");
@@ -242,13 +270,13 @@ namespace Dominus.Application.Services
             );
         }
 
-        public async Task<ApiResponse<PagedResult<OrderDto>>> GetAllOrdersForAdminAsync(int page,
-    int pageSize)
+        public async Task<ApiResponse<PagedResult<OrderDto>>> GetAllOrdersForAdminAsync(
+    int page,
+    int pageSize,
+    OrderStatus? status)
         {
+            // Pagination validation
             page = page <= 0 ? 1 : page;
-
-            //int page = 1;
-            //int pageSize = 10;
             pageSize = pageSize switch
             {
                 <= 0 => 10,
@@ -256,19 +284,30 @@ namespace Dominus.Application.Services
                 _ => pageSize
             };
 
-            //The _ is a discard pattern in C# switch expressions. It means "everything else" or "default case".
-            //If none of the above conditions match, use the original pageSize value
-
             var query = _orderRepo.Query();
 
+            // 🔍 Status filter
+            if (status.HasValue)
+            {
+                query = query.Where(o => o.Status == status.Value);
+            }
+
             var totalCount = await query.CountAsync();
+
+            if (totalCount == 0)
+            {
+                return new ApiResponse<PagedResult<OrderDto>>(
+                    404,
+                    "No orders found"
+                );
+            }
 
             var orders = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            var response = new PagedResult<OrderDto>
+            var result = new PagedResult<OrderDto>
             {
                 Page = page,
                 PageSize = pageSize,
@@ -278,10 +317,11 @@ namespace Dominus.Application.Services
 
             return new ApiResponse<PagedResult<OrderDto>>(
                 200,
-                "All orders fetched successfully",
-                response
+                "Orders fetched successfully",
+                result
             );
         }
+
 
 
 

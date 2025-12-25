@@ -32,13 +32,14 @@ namespace Dominus.WebAPI.Controllers
         }
 
 
-        [HttpPost("ToggleBy_{Id}")]
+        [HttpPost("Toggle/{productId:int}")]
         [Authorize(Policy = "user")]
-        public async Task<IActionResult> Add(AddToWishlistDto dto)
+        public async Task<IActionResult> Toggle(int productId)
         {
-            var response = await _service.AddAsync(UserId, dto);
+            var response = await _service.ToggleAsync(UserId, productId);
             return StatusCode(response.StatusCode, response);
         }
+
 
         //[HttpDelete("item/{id}")]
         //[Authorize(Policy = "user")]

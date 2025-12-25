@@ -63,6 +63,7 @@ namespace Dominus.Application.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequestDto)
         {
+
             var user = await _userRepository.GetAsync(u => u.Email == loginRequestDto.Email);
             if (user == null || user.IsDeleted )
             {
@@ -121,6 +122,40 @@ namespace Dominus.Application.Services
 
             return new AuthResponseDto(200, "Token refreshed successfully", newAccessToken, newRefreshToken);
         }
+        public async Task<AuthResponseDto> LogoutAsync(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return new AuthResponseDto(400, "Refresh token is required");
+            }
+
+            var user = await _userRepository.GetAsync(
+                u => u.RefreshToken == refreshToken
+            );
+
+            if (user == null)
+            {
+                return new AuthResponseDto(401, "Invalid refresh token");
+            }
+
+            if (user.IsDeleted)
+            {
+                return new AuthResponseDto(404, "User not found");
+            }
+
+            if (user.IsBlocked)
+            {
+                return new AuthResponseDto(403, "User account is blocked");
+            }
+
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            return new AuthResponseDto(200, "Logout successful");
+        }
 
         public async Task<bool> RevokeTokenAsync(string refreshToken)
         {
@@ -169,5 +204,30 @@ namespace Dominus.Application.Services
         {
             return Guid.NewGuid().ToString();
         }
+
+
+        public async Task<AuthResponseDto> GenerateAccessTokenFromRefreshAsync(string refreshToken)
+        {
+            var user = await _userRepository.GetAsync(u => u.RefreshToken == refreshToken);
+
+            if (user == null || user.IsDeleted)
+                return new AuthResponseDto(401, "Invalid refresh token");
+
+            if (user.RefreshTokenExpiryTime == null ||
+                user.RefreshTokenExpiryTime < DateTime.UtcNow)
+                return new AuthResponseDto(401, "Refresh token expired");
+
+            if (user.IsBlocked)
+                return new AuthResponseDto(403, "User account is blocked");
+
+            var newAccessToken = GenerateJwtToken(user);
+
+            return new AuthResponseDto(
+                200,
+                "Access token generated successfully",
+                newAccessToken
+            );
+        }
+
     }
 }

@@ -8,10 +8,10 @@ namespace Dominus.Domain.DTOs.CategoryDTOs
         [DefaultValue("Mobile/Accessories")]
         [Required]
         [MaxLength(20)]
-        [RegularExpression(
-            @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
-            ErrorMessage = "Category name must contain only letters and spaces"
-        )]
+        //[RegularExpression(
+        //    @"^(?! )(?!.*  )[A-Za-z]+( [A-Za-z]+)*$",
+        //    ErrorMessage = "Category name must contain only letters and spaces"
+        //)]
         public string Name { get; set; } = null!;
 
         [DefaultValue("Definition....")]

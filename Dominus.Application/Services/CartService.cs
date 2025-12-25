@@ -25,7 +25,6 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<CartDto>> GetCartByUserAsync(string userId)
         {
-            // 1️⃣ UserId validation
             if (string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResponse<CartDto>(
@@ -34,7 +33,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 2️⃣ Fetch user via GENERIC repository
             var user = await _userRepo.GetAsync(u => u.Id.ToString() == userId);
 
             if (user == null || user.IsDeleted)
@@ -53,7 +51,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 3️⃣ Fetch cart
             var cart = await _cartRepo.GetByUserIdAsync(userId);
 
             if (cart == null)
@@ -65,7 +62,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 4️⃣ No items
             if (cart == null || !cart.Items.Any())
             {
                 return new ApiResponse<CartDto>(
@@ -82,7 +78,6 @@ namespace Dominus.Application.Services
             var validItems = new List<CartItemDto>();
             var warnings = new List<string>();
 
-            // 5️⃣ Item-level validation
             foreach (var item in cart.Items)
             {
                 var product = item.Product;
@@ -117,7 +112,6 @@ namespace Dominus.Application.Services
                 });
             }
 
-            // 6️⃣ All items invalid
             if (!validItems.Any())
             {
                 return new ApiResponse<CartDto>(
@@ -131,7 +125,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 7️⃣ Final response
             var result = new CartDto
             {
                 CartId = cart.Id,
@@ -151,16 +144,14 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<CartDto>> AddToCartAsync(string userId, AddToCartDto dto)
         {
-            // 1️⃣ UserId validation
             if (string.IsNullOrWhiteSpace(userId))
             {
                 return new ApiResponse<CartDto>(401, "User is not authenticated");
             }
 
-            // 2️⃣ Product existence
             var product = await _productRepo.GetByIdAsync(dto.ProductId);
 
-            if (product == null || product.IsDeleted 
+            if (product == null || product.IsDeleted || !product.IsActive
                 //|| !product.IsActive
                 )
             {
@@ -170,7 +161,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 3️⃣ Stock validation
             if (!product.InStock || product.CurrentStock <= 0)
             {
                 return new ApiResponse<CartDto>(
@@ -187,7 +177,6 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // 4️⃣ Get or create cart
             var cart = await _cartRepo.GetByUserIdAsync(userId);
 
             if (cart == null)
@@ -198,10 +187,9 @@ namespace Dominus.Application.Services
                 };
 
                 await _cartRepo.AddAsync(cart);
-                await _cartRepo.SaveChangesAsync(); // MUST save to get CartId
+                await _cartRepo.SaveChangesAsync(); 
             }
 
-            // 5️⃣ Add or update item
             var existingItem = cart.Items
                 .FirstOrDefault(i => i.ProductId == dto.ProductId);
 
@@ -228,10 +216,8 @@ namespace Dominus.Application.Services
                 existingItem.Quantity = newQty;
             }
 
-            // 6️⃣ Save
             await _cartRepo.SaveChangesAsync();
 
-            // 7️⃣ Reload cart (with products)
             var updatedCart = await _cartRepo.GetByUserIdAsync(userId);
 
             return new ApiResponse<CartDto>(
@@ -291,7 +277,7 @@ namespace Dominus.Application.Services
 
             await _cartRepo.SaveChangesAsync();
 
-            return new ApiResponse<bool>(200, "Item removed from cart", true);
+            return new ApiResponse<bool>(201, "Item removed from cart", true);
         }
 
 
@@ -305,7 +291,7 @@ namespace Dominus.Application.Services
             var activeItems = cart.Items.Where(i => !i.IsDeleted).ToList();
 
             if (!activeItems.Any())
-                return new ApiResponse<bool>(200, "Cart already empty", true);
+                return new ApiResponse<bool>(201, "Cart already empty", true);
 
             foreach (var item in activeItems)
             {
@@ -314,7 +300,7 @@ namespace Dominus.Application.Services
 
             await _cartRepo.SaveChangesAsync();
 
-            return new ApiResponse<bool>(200, "Cart cleared", true);
+            return new ApiResponse<bool>(201, "Cart cleared", true);
         }
 
 
