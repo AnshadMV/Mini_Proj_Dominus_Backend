@@ -22,8 +22,16 @@ namespace Dominus.Domain.DTOs.AuthDTOs
         [MaxLength(50, ErrorMessage = "Password cannot exceed 50 characters")]
         [RegularExpression(
             @"^(?=(?:.*[A-Z]))(?=(?:.*[a-z]))(?=(?:.*\d))(?=(?:.*[@$!%*?&]))(?!.*\s)(?!.*(.)\1\1).{8,50}$",
-            ErrorMessage = "Password cannot contain spaces"
+            ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, no spaces, and no repeated characters."
         )]
+        //[Required]
+        //[MinLength(8)]
+        //[MaxLength(50)]
+        //[RegularExpression(@"[A-Z]", ErrorMessage = "Password must contain an uppercase letter")]
+        //[RegularExpression(@"[a-z]", ErrorMessage = "Password must contain a lowercase letter")]
+        //[RegularExpression(@"\d", ErrorMessage = "Password must contain a number")]
+        //[RegularExpression(@"[@$!%*?&]", ErrorMessage = "Password must contain a special character")]
+        //[RegularExpression(@"^\S*$", ErrorMessage = "Password cannot contain spaces")]
         public string Password { get; set; } = null!;
     }
 }

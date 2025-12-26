@@ -1,5 +1,6 @@
 ﻿
 using Dominus.Domain.Entities;
+using Dominus.Domain.Entities.Dominus.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dominus.Infrastructure.Data
@@ -31,6 +32,7 @@ namespace Dominus.Infrastructure.Data
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
+        public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -157,6 +159,11 @@ namespace Dominus.Infrastructure.Data
     .HasForeignKey(oi => oi.ColorId)
     .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<ProductImage>()
+    .HasOne(pi => pi.Product)
+    .WithMany(p => p.Images)
+    .HasForeignKey(pi => pi.ProductId)
+    .OnDelete(DeleteBehavior.Cascade);
 
         }
 

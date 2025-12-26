@@ -1,9 +1,10 @@
-﻿using Dominus.Application.Interfaces.IServices;
+﻿using Dominus.Application.DTOs.UserProfile;
+using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.DTOs.AuthDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace   Dominus.WebAPI.Controllers
+namespace Dominus.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -38,32 +39,41 @@ namespace   Dominus.WebAPI.Controllers
                 refreshToken = result.RefreshToken
             });
         }
+
+
         [Authorize]
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
+        [HttpGet("myProfile")]
+        public async Task<IActionResult> GetMyProfile()
         {
-            var refreshToken = Request.Cookies["refreshToken"];
-
-            if (string.IsNullOrWhiteSpace(refreshToken))
-            {
-                return BadRequest(new
-                {
-                    message = "Refresh token missing"
-                });
-            }
-
-            var response = await _authService.LogoutAsync(refreshToken);
-
-            if (response.StatusCode != 200)
-                return StatusCode(response.StatusCode, response);
-
-            DeleteTokenCookies();
-
-            return Ok(new
-            {
-                message = response.Message
-            });
+            var userIdClaim = User.FindFirst("userId");
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "User not authenticated" });
+            var userId = int.Parse(userIdClaim.Value);
+            var response = await _authService.GetUserProfileAsync(userId);
+            return StatusCode(response.StatusCode, response);
         }
+
+
+
+        [Authorize]
+        [HttpPut("updateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDto dto)
+        {
+            var userIdClaim = User.FindFirst("userId");
+
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "User not authenticated" });
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var response = await _authService.UpdateProfileAsync(dto, userId);
+
+            return StatusCode(response.StatusCode, response);
+        }
+
+
+       
+        [Authorize]
         [HttpPost("Token/Refresh-Access")]
         public async Task<IActionResult> GetNewAccessToken()
         {
@@ -91,7 +101,24 @@ namespace   Dominus.WebAPI.Controllers
             });
         }
 
-        
+
+        [Authorize]
+        [HttpPost("ForgotPassword")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordRequestDto dto)
+        {
+            var emailFromToken = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrWhiteSpace(emailFromToken))
+                return Unauthorized(new { message = "User not authenticated" });
+
+            // 🔐 Prevent using another user's email
+            if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email.Trim() != emailFromToken)
+                return BadRequest(new { message = "You can only request password reset for your own account" });
+
+            var result = await _authService.ForgotPasswordAsync(emailFromToken);
+            return StatusCode(result.StatusCode, result);
+        }
+
 
 
         //[HttpPost("refresh-token")]
@@ -152,6 +179,7 @@ namespace   Dominus.WebAPI.Controllers
                 });
             }
         }
+
         private void DeleteTokenCookies()
         {
             Response.Cookies.Delete("accessToken");
@@ -163,5 +191,55 @@ namespace   Dominus.WebAPI.Controllers
         //    Response.Cookies.Delete("accessToken");
         //    Response.Cookies.Delete("refreshToken");
         //}
+
+
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequestDto dto)
+        {
+            var result = await _authService.ResetPasswordAsync(dto.Token, dto.NewPassword);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return BadRequest(new
+                {
+                    message = "Refresh token missing"
+                });
+            }
+
+            var response = await _authService.LogoutAsync(refreshToken);
+
+            if (response.StatusCode != 200)
+                return StatusCode(response.StatusCode, response);
+
+            DeleteTokenCookies();
+
+            return Ok(new
+            {
+                message = response.Message
+            });
+
+        }
+
+
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+

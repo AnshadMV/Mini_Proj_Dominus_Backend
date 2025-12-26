@@ -17,7 +17,7 @@ namespace Dominus.Domain.DTOs.OrderDTOs
     {
         public int ProductId { get; set; }
         public int ColorId { get; set; }
-        [Range(1, 20, ErrorMessage = "Quantity must be between 1 and 20")]
+        [Range(1, 10, ErrorMessage = "Quantity must be between 1 and 10")]
 
         public int Quantity { get; set; }
     }

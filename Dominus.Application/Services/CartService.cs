@@ -108,7 +108,11 @@ namespace Dominus.Application.Services
                     ProductId = product.Id,
                     ProductName = product.Name,
                     Price = product.Price,
-                    Quantity = item.Quantity
+                    Quantity = item.Quantity,
+                    Images = product.Images
+        .Where(i => !i.IsDeleted)
+        .Select(i => i.ImageUrl)
+        .ToList()
                 });
             }
 
@@ -314,7 +318,11 @@ namespace Dominus.Application.Services
                 ProductId = i.ProductId,
                 ProductName = i.Product?.Name ?? "Unknown",
                 Price = i.Product?.Price ?? 0,
-                Quantity = i.Quantity
+                Quantity = i.Quantity,
+                Images = i.Product?.Images
+        .Where(img => !img.IsDeleted)
+        .Select(img => img.ImageUrl)
+        .ToList() ?? new()
             }).ToList()
         };
     }

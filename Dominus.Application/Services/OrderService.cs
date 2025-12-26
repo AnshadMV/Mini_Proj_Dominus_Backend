@@ -17,15 +17,20 @@ namespace Dominus.Application.Services
         private readonly IOrderRepository _orderRepo;
         private readonly IProductRepository _productRepo;
         private readonly IColorRepository _colorRepo;
+        private readonly ICartRepository _cartRepo;
+
 
         public OrderService(
             IOrderRepository orderRepo,
             IProductRepository productRepo,
-            IColorRepository colorRepo)
+            IColorRepository colorRepo,
+            ICartRepository cartRepo)
         {
             _orderRepo = orderRepo;
             _productRepo = productRepo;
             _colorRepo = colorRepo;
+            _cartRepo = cartRepo;
+
         }
 
 
@@ -157,10 +162,16 @@ namespace Dominus.Application.Services
             Status = order.Status.ToString(),
             TotalAmount = order.TotalAmount,
             ShippingAddress = order.ShippingAddress,
+
             Items = order.Items.Select(i => new OrderItemDto
             {
                 ProductId = i.ProductId,
                 ProductName = i.Product?.Name ?? "Unknown",
+
+                ProductImages = i.Product?.Images
+                    .Where(img => !img.IsDeleted)
+                    .Select(img => img.ImageUrl)
+                    .ToList() ?? new List<string>(),
 
                 ColorId = i.ColorId,
                 ColorName = i.Color?.Name ?? "Unknown",
@@ -170,6 +181,7 @@ namespace Dominus.Application.Services
                 Price = i.Price
             }).ToList()
         };
+
 
 
         public async Task<ApiResponse<object>> PayForOrderAsync(
@@ -198,9 +210,25 @@ namespace Dominus.Application.Services
                 product.CurrentStock -= item.Quantity;
                 product.InStock = product.CurrentStock > 0;
             }
+            var cart = await _cartRepo.GetByUserIdAsync(userId);
+
+            if (cart != null)
+            {
+                var orderedProductIds = order.Items
+                    .Select(i => i.ProductId)
+                    .ToHashSet();
+
+                foreach (var cartItem in cart.Items
+                    .Where(i => !i.IsDeleted && orderedProductIds.Contains(i.ProductId)))
+                {
+                    cartItem.IsDeleted = true;
+                }
+            }
 
             order.Status = OrderStatus.Paid;
             order.PaymentReference = dto.PaymentReference;
+            order.PaidOn = DateTime.UtcNow;
+
 
             await _orderRepo.SaveChangesAsync();
 

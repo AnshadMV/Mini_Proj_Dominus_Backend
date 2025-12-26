@@ -1,9 +1,12 @@
-﻿using Dominus.Application.DTOs.ProductDTOs;
+﻿using Dominus.Application.DTOs.P_ImageDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ProductDTOs;
 using Dominus.Domain.Entities;
+using Dominus.Domain.Entities.Dominus.Domain.Entities;
+using Dominus.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -15,17 +18,20 @@ namespace Dominus.Application.Services
         private readonly IProductRepository _productRepository;
         private readonly IColorRepository _colorRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IImageStorageService _imageService;
 
         public ProductService(
             IGenericRepository<Product> repository,
             IProductRepository productRepository,
             IColorRepository colorRepository,
-           ICategoryRepository categoryRepository)
+           ICategoryRepository categoryRepository,
+            IImageStorageService imageService)
         {
             _repository = repository;
             _productRepository = productRepository;
             _colorRepository = colorRepository;
             _categoryRepository = categoryRepository;
+            _imageService = imageService;
         }
 
         public async Task<ApiResponse<ProductDto>> AddProductAsync(CreateProductDto dto)
@@ -80,15 +86,9 @@ namespace Dominus.Application.Services
                 if (colors.Any(c => !c.IsActive))
                     return new ApiResponse<ProductDto>(400, "One or more colors are inactive");
             }
-            var imageUrls = new List<string>();
-            //if (dto.Images != null && request.Images.Any())
-            //{
-            //    foreach (var file in request.Images)
-            //    {
-            //        var url = await _fileService.UploadAsync(file);
-            //        imageUrls.Add(url);
-            //    }
-            //}
+            
+            
+
 
             var product = new Product
             {
@@ -103,7 +103,19 @@ namespace Dominus.Application.Services
                 Status = dto.Status,
                 Warranty = dto.Warranty
             };
+            if (dto.Images != null && dto.Images.Any())
+            {
+                foreach (var file in dto.Images)
+                {
+                    var (url, publicId) = await _imageService.UploadAsync(file);
 
+                    product.Images.Add(new ProductImage
+                    {
+                        ImageUrl = url,
+                        PublicId = publicId
+                    });
+                }
+            }
             if (dto.ColorIds != null && dto.ColorIds.Any())
             {
 
@@ -124,7 +136,7 @@ namespace Dominus.Application.Services
                 p => p.Id == product.Id,
                 include: q => q
                     .Include(p => p.Category)
-
+                       .Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -144,7 +156,7 @@ namespace Dominus.Application.Services
             var product = await _repository.GetAsync(
                 p => p.Id == dto.Id,
                 include: q => q
-                    .Include(p => p.Category)
+                    .Include(p => p.Category).Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -231,7 +243,7 @@ namespace Dominus.Application.Services
             var updatedProduct = await _repository.GetAsync(
      p => p.Id == product.Id,
      include: q => q
-         .Include(p => p.Category)
+         .Include(p => p.Category).Include(p => p.Images)
          .Include(p => p.AvailableColors)
          .ThenInclude(pc => pc.Color)
  );
@@ -253,7 +265,7 @@ namespace Dominus.Application.Services
             var product = await _repository.GetAsync(
                 p => p.Id == id,
                 include: q => q
-                    .Include(p => p.Category)
+                    .Include(p => p.Category).Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -401,7 +413,7 @@ namespace Dominus.Application.Services
             var updatedProduct = await _repository.GetAsync(
                 p => p.Id == id,
                 include: q => q
-                    .Include(p => p.Category)
+                    .Include(p => p.Category).Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -449,7 +461,7 @@ namespace Dominus.Application.Services
             var product = await _repository.GetAsync(
                 p => p.Id == id,
                 include: q => q
-                    .Include(p => p.Category)
+                    .Include(p => p.Category).Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
                     .Where(p=> !p.IsDeleted)
@@ -467,7 +479,9 @@ namespace Dominus.Application.Services
             var products = await _productRepository.GetAllAsync(
                 include: q => q
                     .Include(p => p.Category)
+                    
                     .Where(c=> c.IsActive)
+                     .Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -482,6 +496,7 @@ namespace Dominus.Application.Services
                 predicate: p => p.CategoryId == categoryId && p.IsActive && !p.IsDeleted,
                 include: q => q
                     .Include(p => p.Category)
+                     .Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -613,7 +628,7 @@ namespace Dominus.Application.Services
                     (!filter.MaxPrice.HasValue || p.Price <= filter.MaxPrice) &&
                     (!filter.InStock.HasValue || p.InStock == filter.InStock)
                 )
-                .Include(p => p.Category)
+                .Include(p => p.Category).Include(p => p.Images)
                 .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color);
 
@@ -724,7 +739,7 @@ namespace Dominus.Application.Services
 
             var query = _productRepository.Query()
                 .Where(p => p.IsActive && !p.IsDeleted)
-                .Include(p => p.Category)
+                .Include(p => p.Category).Include(p => p.Images)
                 .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color);
 
@@ -785,7 +800,7 @@ namespace Dominus.Application.Services
                 Description = p.Description,
                 Price = p.Price,
                 CategoryId = p.CategoryId,
-                CategoryName = p.Category != null ? p.Category.Name : null,
+                CategoryName = p.Category?.Name ?? string.Empty,
                 CurrentStock = p.CurrentStock,
                 InStock = p.InStock,
                 IsActive = p.IsActive,
@@ -808,8 +823,12 @@ namespace Dominus.Application.Services
         pc.Color.IsDeleted)
     )
     .Select(pc => pc.Color.Name)
-    .ToList()
+    .ToList(),
 
+    Images = p.Images
+    .Where(i => !i.IsDeleted)
+    .Select(i => i.ImageUrl)
+    .ToList(),
 
 
 
@@ -852,7 +871,7 @@ namespace Dominus.Application.Services
             var updatedProduct = await _repository.GetAsync(
                 p => p.Id == product.Id,
                 include: q => q
-                    .Include(p => p.Category)
+                    .Include(p => p.Category).Include(p => p.Images)
                     .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color)
             );
@@ -889,7 +908,7 @@ namespace Dominus.Application.Services
                     !p.IsDeleted &&
                     
                     EF.Functions.Like(p.Name, $"%{search}%"))
-                .Include(p => p.Category)
+                .Include(p => p.Category).Include(p => p.Images)
                 .Include(p => p.AvailableColors)
                     .ThenInclude(pc => pc.Color);
 
@@ -922,6 +941,58 @@ namespace Dominus.Application.Services
                 "Products fetched successfully",
                 result
             );
+        }
+        public async Task<ApiResponse<List<string>>> AddProductImagesAsync(AddProductImagesDto dto)
+        {
+            var product = await _repository.GetAsync(
+                p => p.Id == dto.ProductId && !p.IsDeleted,
+                q => q.Include(p => p.Images)
+            );
+
+            if (product == null)
+                return new ApiResponse<List<string>>(404, "Product not found");
+
+            var uploadedUrls = new List<string>();
+
+            foreach (var file in dto.Images)
+            {
+                var (url, publicId) = await _imageService.UploadAsync(file);
+
+                product.Images.Add(new ProductImage
+                {
+                    ImageUrl = url,
+                    PublicId = publicId
+                });
+
+                uploadedUrls.Add(url);
+            }
+
+            _repository.Update(product);
+            await _repository.SaveChangesAsync();
+
+            return new ApiResponse<List<string>>(
+                200,
+                "Images added successfully",
+                uploadedUrls
+            );
+        }
+        public async Task<ApiResponse<bool>> DeleteProductImageAsync(int imageId)
+        {
+            var image = await _repository.Query()
+                .SelectMany(p => p.Images)
+                .FirstOrDefaultAsync(i => i.Id == imageId && !i.IsDeleted);
+
+            if (image == null)
+                return new ApiResponse<bool>(404, "Image not found");
+
+            await _imageService.DeleteAsync(image.PublicId);
+
+            image.IsDeleted = true;
+
+            _repository.Update(image.Product);
+            await _repository.SaveChangesAsync();
+
+            return new ApiResponse<bool>(200, "Image removed successfully", true);
         }
 
     }

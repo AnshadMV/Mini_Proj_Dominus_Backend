@@ -1,4 +1,5 @@
-﻿using Dominus.Application.DTOs.ProductDTOs;
+﻿using Dominus.Application.DTOs.P_ImageDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ProductDTOs;
 using System;
@@ -25,6 +26,8 @@ namespace Dominus.Application.Interfaces.IServices
         Task<ApiResponse<PagedResult<ProductDto>>> GetPagedProductsAsync(int page = 1, int pageSize = 10);
         Task<ApiResponse<PagedResult<ProductDto>>>  GetFilteredProductsAsync(ProductFilterDto filter);
         Task<ApiResponse<PagedResult<ProductDto>>>SearchProductsByNameAsync(string search, int page = 1, int pageSize = 10);
+        Task<ApiResponse<List<string>>> AddProductImagesAsync(AddProductImagesDto dto);
+        Task<ApiResponse<bool>> DeleteProductImageAsync(int imageId);
 
 
     }

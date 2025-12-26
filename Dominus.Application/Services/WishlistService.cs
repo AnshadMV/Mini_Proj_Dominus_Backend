@@ -37,8 +37,8 @@ namespace Dominus.Application.Services
             {
                 return new ApiResponse<WishlistDto>(
                     201,
-                    "Wishlist is empty",
-                    new WishlistDto { UserId = userId }
+                    "Wishlist is empty"
+                    //new WishlistDto { UserId = userId }
                 );
             }
 
@@ -46,12 +46,12 @@ namespace Dominus.Application.Services
             {
                 return new ApiResponse<WishlistDto>(
                     201,
-                    "No items in wishlist",
-                    new WishlistDto
-                    {
-                        WishlistId = wishlist.Id,
-                        UserId = userId
-                    }
+                    "No items in wishlist"
+                    //new WishlistDto
+                    //{
+                    //    WishlistId = wishlist.Id,
+                    //    UserId = userId
+                    //}
                 );
             }
 
@@ -73,7 +73,11 @@ namespace Dominus.Application.Services
                     Id = item.Id,
                     ProductId = product.Id,
                     ProductName = product.Name,
-                    Price = product.Price
+                    Price = product.Price,
+                    Images = product.Images
+        .Where(i => !i.IsDeleted)
+        .Select(i => i.ImageUrl)
+        .ToList()
                 });
             }
 
@@ -81,12 +85,12 @@ namespace Dominus.Application.Services
             {
                 return new ApiResponse<WishlistDto>(
                     201,
-                    "All wishlist items are unavailable",
-                    new WishlistDto
-                    {
-                        WishlistId = wishlist.Id,
-                        UserId = userId
-                    }
+                    "All wishlist items are unavailable"
+                    //new WishlistDto
+                    //{
+                    //    WishlistId = wishlist.Id,
+                    //    UserId = userId
+                    //}
                 );
             }
 
@@ -143,10 +147,8 @@ namespace Dominus.Application.Services
 
                 return new ApiResponse<WishlistDto>(
                     201,
-                    "Product removed from wishlist",
-                    refreshed == null
-                        ? new WishlistDto { UserId = userId }
-                        : Map(refreshed)
+                    "Product removed from wishlist"
+                    
                 );
             }
 
@@ -220,7 +222,11 @@ namespace Dominus.Application.Services
                 Id = i.Id,
                 ProductId = i.ProductId,
                 ProductName = i.Product?.Name ?? "Unknown",
-                Price = i.Product?.Price ?? 0
+                Price = i.Product?.Price ?? 0,
+                Images = i.Product?.Images
+        .Where(img => !img.IsDeleted)
+        .Select(img => img.ImageUrl)
+        .ToList() ?? new()
             }).ToList()
         };
     }

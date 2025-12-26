@@ -23,6 +23,7 @@
         public List<string> AvailableColors { get; set; } = new();
 
         public List<string> DeactivatedColors { get; set; } = new();
+        public List<string> Images { get; set; } = new();
 
     }
 }

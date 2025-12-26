@@ -22,6 +22,7 @@ namespace Dominus.Infrastructure.Persistence
         public async Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId)
         {
             return await _context.Products
+                .Include(p => p.Images)
                 //.Include(p => p.Category)
                 .Include(p => p.AvailableColors)
                 //.Include(p => p.im)
@@ -33,9 +34,10 @@ namespace Dominus.Infrastructure.Persistence
         {
             return await _context.Products
                 //.Include(p => p.Category)
+
                 .Include(p => p.AvailableColors)
                 .ThenInclude(pc => pc.Color)
-                //.Include(p => p.Images)
+                .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
         public async Task<Product?> GetByIdAsync(int id)
@@ -53,7 +55,9 @@ namespace Dominus.Infrastructure.Persistence
         public async Task<Product?> GetByIdWithColorsAsync(int id)
         {
             return await _context.Products
+                .Include(p => p.Images)
                 .Include(p => p.AvailableColors)
+
                     .ThenInclude(pc => pc.Color)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }

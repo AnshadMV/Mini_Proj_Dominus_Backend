@@ -9,6 +9,7 @@
         public string HexCode { get; set; } = null!;
         public int Quantity { get; set; }
         public decimal Price { get; set; }
+        public List<string> ProductImages { get; set; } = new(); // ✅ NEW
 
         public decimal Total => Price * Quantity;
     }

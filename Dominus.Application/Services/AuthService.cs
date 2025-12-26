@@ -1,6 +1,8 @@
 using BCrypt.Net;
+using Dominus.Application.DTOs.UserProfile;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
+using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.AuthDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Enums;
@@ -30,7 +32,7 @@ namespace Dominus.Application.Services
             var existingUser = await _userRepository.GetAsync(u => u.Email == registerRequestDto.Email);
             if (existingUser != null)
             {
-                return new AuthResponseDto(400, "User with this email already exists");
+                return new AuthResponseDto(401, "User with this email already exists");
             }
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerRequestDto.Password);
@@ -126,7 +128,7 @@ namespace Dominus.Application.Services
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return new AuthResponseDto(400, "Refresh token is required");
+                return new AuthResponseDto(401, "Refresh token is required");
             }
 
             var user = await _userRepository.GetAsync(
@@ -228,6 +230,127 @@ namespace Dominus.Application.Services
                 newAccessToken
             );
         }
+        public async Task<ApiResponse<UserProfileDto>> GetUserProfileAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || user.IsDeleted)
+                return new ApiResponse<UserProfileDto>(404, "User not found");
+            if (user.IsBlocked)
+                return new ApiResponse<UserProfileDto>(403, "User is blocked");
+            var profile = new UserProfileDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role.ToString(),
+                IsBlocked = user.IsBlocked,
+                CreatedOn = user.CreatedOn
+            };
+            return new ApiResponse<UserProfileDto>(200, "Profile fetched successfully", profile
+            );
+        }
+
+
+        public async Task<AuthResponseDto> UpdateProfileAsync(UpdateProfileRequestDto dto, int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+
+            if (user == null || user.IsDeleted)
+                return new AuthResponseDto(404, "User not found");
+
+            if (user.IsBlocked)
+                return new AuthResponseDto(403, "Blocked users cannot update profile");
+
+            // ?? Email must match token email (cannot change)
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var trimmedEmail = dto.Email.Trim();
+
+                if (!trimmedEmail.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+                    return new AuthResponseDto(401, "Email cannot be changed. It must match your registered email");
+            }
+
+            bool updated = false;
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+            {
+                user.Name = dto.Name.Trim();
+                updated = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
+                    return new AuthResponseDto(401, "Current password is required");
+
+                var currentTrimmed = dto.CurrentPassword.Trim();
+                var newTrimmed = dto.NewPassword.Trim();
+
+                if (currentTrimmed == newTrimmed)
+                    return new AuthResponseDto(401, "New password cannot be same as current password");
+
+                var valid = BCrypt.Net.BCrypt.Verify(currentTrimmed, user.PasswordHash);
+                if (!valid)
+                    return new AuthResponseDto(401, "Current password is incorrect");
+
+                if (newTrimmed.Length < 8)
+                    return new AuthResponseDto(401, "New password must be at least 8 characters");
+
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newTrimmed);
+                updated = true;
+            }
+
+            if (!updated)
+                return new AuthResponseDto(401, "Nothing to update");
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            return new AuthResponseDto(201, "Profile updated successfully");
+        }
+
+        public async Task<AuthResponseDto> ForgotPasswordAsync(string email)
+        {
+            var user = await _userRepository.GetAsync(u => u.Email == email);
+
+            if (user == null || user.IsDeleted)
+                return new AuthResponseDto(404, "User not found");
+
+            if (user.IsBlocked)
+                return new AuthResponseDto(403, "Blocked user cannot reset password");
+
+            user.PasswordResetToken = Guid.NewGuid().ToString();
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddMinutes(3);
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            return new AuthResponseDto(200, "Password reset token generated", user.PasswordResetToken);
+        }
+        public async Task<AuthResponseDto> ResetPasswordAsync(string token, string newPassword)
+        {
+            var user = await _userRepository.GetAsync(
+                u => u.PasswordResetToken == token
+            );
+
+            if (user == null)
+                return new AuthResponseDto(401, "Invalid token");
+
+            if (user.PasswordResetTokenExpiry == null ||
+                user.PasswordResetTokenExpiry < DateTime.UtcNow)
+                return new AuthResponseDto(401, "Token expired");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            return new AuthResponseDto(201, "Password reset successfully");
+        }
+
+
 
     }
 }

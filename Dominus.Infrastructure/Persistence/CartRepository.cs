@@ -19,6 +19,8 @@ namespace Dominus.Infrastructure.Persistence
             return await _context.Carts
                 .Include(c => c.Items)
                 .ThenInclude(i => i.Product)
+                            .ThenInclude(p => p.Images)
+
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
     }

@@ -19,6 +19,8 @@ namespace Dominus.Infrastructure.Persistence
             return await _context.Wishlists
                 .Include(w => w.Items)
                 .ThenInclude(i => i.Product)
+                            .ThenInclude(p => p.Images)
+
                 .FirstOrDefaultAsync(w => w.UserId == userId);
         }
     }

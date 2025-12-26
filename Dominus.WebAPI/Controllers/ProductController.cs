@@ -1,4 +1,5 @@
-﻿using Dominus.Application.DTOs.ProductDTOs;
+﻿using Dominus.Application.DTOs.P_ImageDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
 using Dominus.Domain.DTOs.ProductDTOs;
@@ -173,6 +174,23 @@ namespace Dominus.WebAPI.Controllers
 
             return StatusCode(result.StatusCode, result);
         }
+
+
+        [HttpPost("Admin/AddImages")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> AddImages([FromForm] AddProductImagesDto dto)
+        {
+            var result = await _productService.AddProductImagesAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+        //[HttpDelete("Admin/DeleteImage/{imageId}")]
+        //[Authorize(Policy = "Admin")]
+        //public async Task<IActionResult> DeleteImage(int imageId)
+        //{
+        //    var result = await _productService.DeleteProductImageAsync(imageId);
+        //    return StatusCode(result.StatusCode, result);
+        //}
+
 
 
     }

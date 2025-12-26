@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; 
+using Microsoft.OpenApi.Models;
 using System;
 using System.Net;
 using System.Security.Claims;
@@ -107,7 +107,7 @@ builder.Services.AddAuthentication(options =>
 
             return context.Response.WriteAsync(result);
         },
-        
+
     };
 });
 
@@ -133,7 +133,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
-            .SetPreflightMaxAge(TimeSpan.FromSeconds(86400)); // For preflight requests
+            .SetPreflightMaxAge(TimeSpan.FromSeconds(86400));
     });
 });
 
@@ -194,6 +194,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddScoped<IImageStorageService, CloudinaryService>();
 
 
 builder.Services.AddSwaggerGen(c =>
@@ -225,7 +226,6 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme. Enter ONLY your JWT token. Do NOT type 'Bearer'."
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {

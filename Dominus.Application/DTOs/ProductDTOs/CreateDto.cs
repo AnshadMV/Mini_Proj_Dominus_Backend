@@ -46,5 +46,8 @@ namespace Dominus.Domain.DTOs.ProductDTOs
 
         [DefaultValue("")]
         public string? Warranty { get; set; }
+
+        public List<IFormFile>? Images { get; set; }
+
     }
 }

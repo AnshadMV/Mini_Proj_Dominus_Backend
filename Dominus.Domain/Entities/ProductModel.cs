@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dominus.Domain.Entities.Dominus.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,8 +28,8 @@ namespace Dominus.Domain.Entities
         public ICollection<ProductColors> AvailableColors { get; set; }
             = new List<ProductColors>();
 
-        //public ICollection<ProductImage> Images { get; set; }
-        //    = new List<ProductImage>();
+        public ICollection<ProductImage> Images { get; set; }
+      = new List<ProductImage>();
     }
 
 }
