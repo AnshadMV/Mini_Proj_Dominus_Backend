@@ -194,7 +194,6 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddScoped<IImageStorageService, CloudinaryService>();
 
 
 builder.Services.AddSwaggerGen(c =>
@@ -325,7 +324,7 @@ if (app.Environment.IsDevelopment())
 
 // CORS must be before UseHttpsRedirection, UseAuthentication and UseAuthorization
 // This ensures CORS headers are set for all requests including preflight
-//app.UseCors("AllowLocalDev");
+app.UseCors("AllowLocalDev");
 
 // Handle preflight requests explicitly
 //app.Use(async (context, next) =>

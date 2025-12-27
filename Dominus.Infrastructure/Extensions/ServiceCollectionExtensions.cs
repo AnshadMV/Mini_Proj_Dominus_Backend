@@ -38,6 +38,7 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IImageStorageService, CloudinaryService>();
 
             return services;
         }

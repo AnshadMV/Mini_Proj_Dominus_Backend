@@ -471,24 +471,19 @@ namespace Dominus.Application.Services
         }
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
-
-
         {
-
-
             var products = await _productRepository.GetAllAsync(
+                predicate: p => !p.IsDeleted && p.IsActive,
                 include: q => q
                     .Include(p => p.Category)
-                    
-                    .Where(c=> c.IsActive)
-                     .Include(p => p.Images)
+                    .Include(p => p.Images)
                     .Include(p => p.AvailableColors)
-                    .ThenInclude(pc => pc.Color)
+                        .ThenInclude(pc => pc.Color)
             );
-            return products
-                .Where(p =>  !p.IsDeleted )
-                .Select(MapToDTO);
+
+            return products.Select(MapToDTO);
         }
+
 
         public async Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(int categoryId)
         {
