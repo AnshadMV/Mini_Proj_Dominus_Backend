@@ -21,6 +21,7 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IWishlistRepository, WishlistRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IShippingAddressRepository, ShippingAddressRepository>();
 
 
             return services;
@@ -39,6 +40,7 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IImageStorageService, CloudinaryService>();
+            services.AddScoped<IShippingAddressService, ShippingAddressService>();
 
             return services;
         }

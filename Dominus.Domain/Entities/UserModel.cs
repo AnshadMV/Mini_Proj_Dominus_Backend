@@ -20,6 +20,8 @@ namespace Dominus.Domain.Entities
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public string? PasswordResetToken { get; set; }
         public DateTime? PasswordResetTokenExpiry { get; set; }
+        public ICollection<ShippingAddress> ShippingAddresses { get; set; }
+    = new List<ShippingAddress>();
 
     }
 

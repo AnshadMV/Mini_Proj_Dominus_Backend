@@ -50,17 +50,11 @@ var key = Encoding.ASCII.GetBytes(jwtSecret);
 
 
 
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-
-
-
-
-
 .AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;
@@ -78,6 +72,18 @@ builder.Services.AddAuthentication(options =>
 
     options.Events = new JwtBearerEvents
     {
+        // ?? THIS IS THE KEY FIX ??
+        OnMessageReceived = context =>
+        {
+            // Read JWT from HttpOnly cookie
+            var token = context.Request.Cookies["accessToken"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                context.Token = token;
+            }
+            return Task.CompletedTask;
+        },
+
         OnChallenge = context =>
         {
             context.HandleResponse();
@@ -106,8 +112,7 @@ builder.Services.AddAuthentication(options =>
             });
 
             return context.Response.WriteAsync(result);
-        },
-
+        }
     };
 });
 

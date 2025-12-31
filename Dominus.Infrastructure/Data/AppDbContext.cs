@@ -33,6 +33,7 @@ namespace Dominus.Infrastructure.Data
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+        public DbSet<ShippingAddress> ShippingAddresses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -164,6 +165,24 @@ namespace Dominus.Infrastructure.Data
     .WithMany(p => p.Images)
     .HasForeignKey(pi => pi.ProductId)
     .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ShippingAddress>()
+       .HasOne(sa => sa.User)
+       .WithMany(u => u.ShippingAddresses)
+       .HasForeignKey(sa => sa.UserId)
+       .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ShippingAddress>()
+                .HasQueryFilter(sa => !sa.IsDeleted);
+
+
+
+
+
+
+
+
+
 
         }
 

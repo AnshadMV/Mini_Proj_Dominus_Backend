@@ -72,8 +72,8 @@ namespace Dominus.WebAPI.Controllers
         }
 
 
-       
-        [Authorize]
+
+        [AllowAnonymous]
         [HttpPost("Token/Refresh-Access")]
         public async Task<IActionResult> GetNewAccessToken()
         {
@@ -164,7 +164,8 @@ namespace Dominus.WebAPI.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddDays(1)
+                    Expires = DateTime.UtcNow.AddDays(1),
+                    Path = "/"
                 });
             }
 
@@ -175,7 +176,8 @@ namespace Dominus.WebAPI.Controllers
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddDays(7)
+                    Expires = DateTime.UtcNow.AddDays(7),
+                    Path = "/"
                 });
             }
         }
@@ -231,7 +233,6 @@ namespace Dominus.WebAPI.Controllers
 
     }
 }
-
 
 
 

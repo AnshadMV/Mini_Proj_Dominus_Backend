@@ -19,6 +19,7 @@
         public string CategoryName { get; set; } = null!;
 
         public int CurrentStock { get; set; }
+        public bool TopSelling { get; set; } = true;
 
         public List<string> AvailableColors { get; set; } = new();
 

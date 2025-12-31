@@ -67,7 +67,7 @@ namespace Dominus.Application.Services
         {
 
             var user = await _userRepository.GetAsync(u => u.Email == loginRequestDto.Email);
-            if (user == null || user.IsDeleted )
+            if (user == null || user.IsDeleted)
             {
                 return new AuthResponseDto(404, "User not found");
             }
@@ -78,7 +78,7 @@ namespace Dominus.Application.Services
             }
 
 
-            
+
 
             if (!BCrypt.Net.BCrypt.Verify(loginRequestDto.Password, user.PasswordHash))
             {

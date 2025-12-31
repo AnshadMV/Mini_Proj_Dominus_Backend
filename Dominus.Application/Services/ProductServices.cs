@@ -786,51 +786,7 @@ namespace Dominus.Application.Services
             );
         }
 
-        private static ProductDto MapToDTO(Product p)
-        {
-            return new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                CategoryId = p.CategoryId,
-                CategoryName = p.Category?.Name ?? string.Empty,
-                CurrentStock = p.CurrentStock,
-                InStock = p.InStock,
-                IsActive = p.IsActive,
-
-                //AvailableColors = p.AvailableColors
-                //    .Where(pc => pc.Color != null)
-                //    .Select(pc => pc.Color!.Name)
-                //    .ToList()
-                AvailableColors = p.AvailableColors
-    .Where(pc => pc.Color != null &&
-        pc.Color.IsActive &&
-        !pc.Color.IsDeleted
-    )
-    .Select(pc => pc.Color.Name)
-    .ToList(),
-
-                DeactivatedColors = p.AvailableColors
-    .Where(pc => pc.Color != null &&
-       ( !pc.Color.IsActive ||
-        pc.Color.IsDeleted)
-    )
-    .Select(pc => pc.Color.Name)
-    .ToList(),
-
-    Images = p.Images
-    .Where(i => !i.IsDeleted)
-    .Select(i => i.ImageUrl)
-    .ToList(),
-
-
-
-            };
-        }
-
-
+        
 
         public async Task<ApiResponse<ProductDto>> AddStockAsync(AddProductStockDto dto)
         {
@@ -989,6 +945,53 @@ namespace Dominus.Application.Services
 
             return new ApiResponse<bool>(200, "Image removed successfully", true);
         }
+
+
+        private static ProductDto MapToDTO(Product p)
+        {
+            return new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category?.Name ?? string.Empty,
+                CurrentStock = p.CurrentStock,
+                InStock = p.InStock,
+                IsActive = p.IsActive,
+            TopSelling = p.TopSelling,
+                //AvailableColors = p.AvailableColors
+                //    .Where(pc => pc.Color != null)
+                //    .Select(pc => pc.Color!.Name)
+                //    .ToList()
+                AvailableColors = p.AvailableColors
+    .Where(pc => pc.Color != null &&
+        pc.Color.IsActive &&
+        !pc.Color.IsDeleted
+    )
+    .Select(pc => pc.Color.Name)
+    .ToList(),
+
+                DeactivatedColors = p.AvailableColors
+    .Where(pc => pc.Color != null &&
+       (!pc.Color.IsActive ||
+        pc.Color.IsDeleted)
+    )
+    .Select(pc => pc.Color.Name)
+    .ToList(),
+
+                Images = p.Images
+    .Where(i => !i.IsDeleted)
+    .Select(i => i.ImageUrl)
+    .ToList(),
+
+
+
+            };
+        }
+
+
 
     }
 }
