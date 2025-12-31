@@ -278,27 +278,7 @@ namespace Dominus.Application.Services
                 updated = true;
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.NewPassword))
-            {
-                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
-                    return new AuthResponseDto(401, "Current password is required");
-
-                var currentTrimmed = dto.CurrentPassword.Trim();
-                var newTrimmed = dto.NewPassword.Trim();
-
-                if (currentTrimmed == newTrimmed)
-                    return new AuthResponseDto(401, "New password cannot be same as current password");
-
-                var valid = BCrypt.Net.BCrypt.Verify(currentTrimmed, user.PasswordHash);
-                if (!valid)
-                    return new AuthResponseDto(401, "Current password is incorrect");
-
-                if (newTrimmed.Length < 8)
-                    return new AuthResponseDto(401, "New password must be at least 8 characters");
-
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newTrimmed);
-                updated = true;
-            }
+            
 
             if (!updated)
                 return new AuthResponseDto(401, "Nothing to update");
@@ -336,8 +316,16 @@ namespace Dominus.Application.Services
             if (user == null)
                 return new AuthResponseDto(401, "Invalid token");
 
-            if (user.PasswordResetTokenExpiry == null ||
-                user.PasswordResetTokenExpiry < DateTime.UtcNow)
+            if (user.PasswordResetTokenExpiry == null)
+                return new AuthResponseDto(401, "Token expired");
+
+            // Force treat DB value as UTC
+            var expiryUtc = DateTime.SpecifyKind(
+                user.PasswordResetTokenExpiry.Value,
+                DateTimeKind.Utc
+            );
+
+            if (expiryUtc <= DateTime.UtcNow)
                 return new AuthResponseDto(401, "Token expired");
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);

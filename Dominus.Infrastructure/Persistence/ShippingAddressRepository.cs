@@ -31,6 +31,30 @@ namespace Dominus.Infrastructure.Persistence
         {
             return await _context.ShippingAddresses.FindAsync(id);
         }
+        public async Task UpdateAsync(ShippingAddress address)
+        {
+            _context.ShippingAddresses.Update(address);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<ShippingAddress?> GetActiveByUserIdAsync(int userId)
+        {
+            return await _context.ShippingAddresses
+                .FirstOrDefaultAsync(sa => sa.UserId == userId && sa.IsActive);
+        }
+
+        public async Task DeactivateAllAsync(int userId)
+        {
+            var activeAddresses = await _context.ShippingAddresses
+                .Where(sa => sa.UserId == userId && sa.IsActive)
+                .ToListAsync();
+
+            foreach (var address in activeAddresses)
+            {
+                address.IsActive = false;
+            }
+
+            await _context.SaveChangesAsync();
+        }
 
         public async Task SoftDeleteAsync(ShippingAddress address)
         {

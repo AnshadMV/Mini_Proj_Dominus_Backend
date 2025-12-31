@@ -30,6 +30,7 @@ namespace Dominus.Application.Services
 
         public async Task<ApiResponse<string>> AddAsync(int userId, ShippingAddressRequestDto dto)
         {
+            await _repo.DeactivateAllAsync(userId);
             var address = new ShippingAddress
             {
                 UserId = userId,
@@ -37,7 +38,8 @@ namespace Dominus.Application.Services
                 City = dto.City.Trim(),
                 State = dto.State.Trim(),
                 Pincode = dto.Pincode,
-                Phone = dto.Phone
+                Phone = dto.Phone,
+                IsActive = true
             };
 
             await _repo.AddAsync(address);
@@ -51,17 +53,75 @@ namespace Dominus.Application.Services
 
             var addresses = await _repo.GetByUserIdAsync(userId);
 
-            var result = addresses.Select(a => new ShippingAddressDto
-            {
-                Id = a.Id,
-                AddressLine = a.AddressLine,
-                City = a.City,
-                State = a.State,
-                Pincode = a.Pincode,
-                Phone = a.Phone
-            });
+            var result = addresses
+         .OrderByDescending(a => a.IsActive) 
+         .Select(a => new ShippingAddressDto
+         {
+             Id = a.Id,
+             AddressLine = a.AddressLine,
+             City = a.City,
+             State = a.State,
+             Pincode = a.Pincode,
+             Phone = a.Phone,
+             IsActive = a.IsActive
+         });
 
             return new ApiResponse<IEnumerable<ShippingAddressDto>>(200, "Addresses fetched", result);
+        }
+        public async Task<ApiResponse<string>> UpdateAsync(
+    int addressId,
+    UpdateShippingAddressRequestDto dto)
+        {
+            var userId = GetUserId();
+
+            var address = await _repo.GetByIdAsync(addressId);
+
+            if (address == null || address.IsDeleted)
+                throw new KeyNotFoundException("Shipping address not found");
+
+            if (address.UserId != userId)
+                throw new UnauthorizedAccessException(
+                    "You are not allowed to update this address"
+                );
+
+            address.AddressLine = dto.AddressLine.Trim();
+            address.City = dto.City.Trim();
+            address.State = dto.State.Trim();
+            address.Pincode = dto.Pincode;
+            address.Phone = dto.Phone;
+
+            await _repo.UpdateAsync(address);
+
+            return new ApiResponse<string>(
+                200,
+                "Shipping address updated successfully",
+                "updated"
+            );
+        }
+        public async Task<ApiResponse<string>> SetActiveAsync(int addressId)
+        {
+            var userId = GetUserId();
+
+            var address = await _repo.GetByIdAsync(addressId);
+
+            if (address == null || address.IsDeleted)
+                throw new KeyNotFoundException("Shipping address not found");
+
+            if (address.UserId != userId)
+                throw new UnauthorizedAccessException("Not allowed");
+
+            // 🔴 Deactivate all
+            await _repo.DeactivateAllAsync(userId);
+
+            // 🟢 Activate selected
+            address.IsActive = true;
+            await _repo.UpdateAsync(address);
+
+            return new ApiResponse<string>(
+                200,
+                "Shipping address set as active",
+                "active"
+            );
         }
 
         public async Task<ApiResponse<string>> DeleteAsync(int id)

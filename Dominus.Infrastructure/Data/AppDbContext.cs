@@ -175,6 +175,8 @@ namespace Dominus.Infrastructure.Data
             modelBuilder.Entity<ShippingAddress>()
                 .HasQueryFilter(sa => !sa.IsDeleted);
 
+            modelBuilder.Entity<ShippingAddress>()
+    .HasIndex(sa => new { sa.UserId, sa.IsActive });
 
 
 

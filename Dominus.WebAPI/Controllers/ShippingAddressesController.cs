@@ -31,6 +31,20 @@ namespace Dominus.WebAPI.Controllers
             var response = await _service.GetMyAddressesAsync();
             return StatusCode(response.StatusCode, response);
         }
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> Update(
+    int id,
+    UpdateShippingAddressRequestDto dto)
+        {
+            var response = await _service.UpdateAsync(id, dto);
+            return StatusCode(response.StatusCode, response);
+        }
+        [HttpPut("set-active/{id}")]
+        public async Task<IActionResult> SetActive(int id)
+        {
+            var response = await _service.SetActiveAsync(id);
+            return StatusCode(response.StatusCode, response);
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)

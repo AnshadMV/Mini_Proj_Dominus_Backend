@@ -8,7 +8,7 @@ namespace Dominus.Application.DTOs.UserProfile
 {
     public class ForgotPasswordRequestDto
     {
-        public string Email { get; set; } = null!;
+        public string? Email { get; set; } = null!;
     }
 
 }

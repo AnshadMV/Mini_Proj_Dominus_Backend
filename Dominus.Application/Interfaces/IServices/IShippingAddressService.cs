@@ -7,6 +7,12 @@ namespace Dominus.Application.Interfaces.IServices
     {
         Task<ApiResponse<string>> AddAsync(int userId, ShippingAddressRequestDto dto);
         Task<ApiResponse<IEnumerable<ShippingAddressDto>>> GetMyAddressesAsync();
+        Task<ApiResponse<string>> UpdateAsync(
+    int addressId,
+    UpdateShippingAddressRequestDto dto
+);
+        Task<ApiResponse<string>> SetActiveAsync(int addressId);
+
         Task<ApiResponse<string>> DeleteAsync(int id);
     }
 }

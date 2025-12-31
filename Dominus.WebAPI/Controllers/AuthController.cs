@@ -184,9 +184,18 @@ namespace Dominus.WebAPI.Controllers
 
         private void DeleteTokenCookies()
         {
-            Response.Cookies.Delete("accessToken");
-            Response.Cookies.Delete("refreshToken");
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,              // MUST MATCH
+                SameSite = SameSiteMode.None, // MUST MATCH
+                Path = "/"                  // MUST MATCH
+            };
+
+            Response.Cookies.Delete("refreshToken", cookieOptions);
+            Response.Cookies.Delete("accessToken", cookieOptions); // if exists
         }
+
 
         //private void DeleteTokenCookies()
         //{

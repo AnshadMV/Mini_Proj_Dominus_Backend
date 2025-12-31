@@ -10,6 +10,7 @@ namespace Dominus.Domain.Entities
         public string State { get; set; } = null!;
         public int Pincode { get; set; } 
         public long Phone { get; set; }
+        public bool IsActive { get; set; } = false;
 
         public User User { get; set; } = null!;
     }
