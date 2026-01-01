@@ -18,44 +18,55 @@ namespace Dominus.Application.Services
         private readonly IProductRepository _productRepo;
         private readonly IColorRepository _colorRepo;
         private readonly ICartRepository _cartRepo;
+        private readonly IShippingAddressRepository _shippingRepo;
 
 
         public OrderService(
             IOrderRepository orderRepo,
             IProductRepository productRepo,
             IColorRepository colorRepo,
-            ICartRepository cartRepo)
+            ICartRepository cartRepo,
+            IShippingAddressRepository shippingRepo)
+
         {
             _orderRepo = orderRepo;
             _productRepo = productRepo;
             _colorRepo = colorRepo;
+            _shippingRepo = shippingRepo;
             _cartRepo = cartRepo;
 
         }
 
 
         public async Task<ApiResponse<OrderDto>> CreateOrderAsync(
-            string userId,
-            CreateOrderDto dto)
+             string userId,
+             CreateOrderDto dto)
         {
             if (dto.Items == null || !dto.Items.Any())
                 return new ApiResponse<OrderDto>(400, "No order items provided");
 
-            if (string.IsNullOrWhiteSpace(dto.ShippingAddress))
+            int uid = int.Parse(userId);
+
+            // 🔥 Get Active Shipping Address
+            var addresses = await _shippingRepo.GetByUserIdAsync(uid);
+
+            var activeAddress = addresses
+                .FirstOrDefault(a => !a.IsDeleted && a.IsActive);
+
+            if (activeAddress == null)
                 return new ApiResponse<OrderDto>(
                     400,
-                    "Shipping address is required"
+                    "No active shipping address found. Please set one before ordering."
                 );
-            var cleanedAddress = dto.ShippingAddress.Trim();
-    //        cleanedAddress = System.Text.RegularExpressions.Regex
-    //.Replace(cleanedAddress, @"\s+", " ");
+
+            string finalAddress =
+                $"{activeAddress.AddressLine}, {activeAddress.City}, {activeAddress.State} - {activeAddress.Pincode}";
 
             var order = new Order
             {
                 UserId = userId,
-                    ShippingAddress = cleanedAddress,
+                ShippingAddress = finalAddress,
                 Status = OrderStatus.PendingPayment
-
             };
 
             decimal total = 0;
@@ -76,9 +87,6 @@ namespace Dominus.Application.Services
                         $"Insufficient stock for {product.Name}"
                     );
 
-                //product.CurrentStock -= item.Quantity;
-                //product.InStock = product.CurrentStock > 0;
-
                 var color = await _colorRepo.GetByIdAsync(item.ColorId);
 
                 if (color == null || color.IsDeleted)
@@ -95,7 +103,6 @@ namespace Dominus.Application.Services
                         400,
                         $"Color not available for {product.Name}"
                     );
-
 
                 order.Items.Add(new OrderItem
                 {
