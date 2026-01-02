@@ -191,7 +191,5 @@ namespace Dominus.WebAPI.Controllers
         //    return StatusCode(result.StatusCode, result);
         //}
 
-
-
     }
 }

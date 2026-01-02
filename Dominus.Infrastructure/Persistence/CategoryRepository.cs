@@ -33,7 +33,7 @@ namespace Dominus.Infrastructure.Persistence
         {
             return await _context.Categories
                         .Include(c => c.Products) 
-                .Where(c => c.IsActive && !c.IsDeleted)
+                .Where(c =>  !c.IsDeleted)
                 .ToListAsync();
         }
     }
