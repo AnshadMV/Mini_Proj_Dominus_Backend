@@ -11,7 +11,6 @@
         public decimal Price { get; set; }
 
         public bool IsActive { get; set; }
-
         public bool InStock { get; set; }
 
         public int CategoryId { get; set; }
@@ -25,6 +24,7 @@
 
         public List<string> DeactivatedColors { get; set; } = new();
         public List<string> Images { get; set; } = new();
+        public string Warranty { get; set; } = "";
 
     }
 }

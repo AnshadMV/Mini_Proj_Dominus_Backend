@@ -367,7 +367,6 @@ app.UseCors("AllowLocalDev");
 //    });
 //}
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 

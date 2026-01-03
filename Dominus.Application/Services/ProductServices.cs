@@ -473,7 +473,7 @@ namespace Dominus.Application.Services
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
             var products = await _productRepository.GetAllAsync(
-                predicate: p => !p.IsDeleted && p.IsActive,
+                predicate: p => !p.IsDeleted,
                 include: q => q
                     .Include(p => p.Category)
                     .Include(p => p.Images)
@@ -961,6 +961,7 @@ namespace Dominus.Application.Services
                 InStock = p.InStock,
                 IsActive = p.IsActive,
             TopSelling = p.TopSelling,
+                Warranty = p.Warranty,
                 //AvailableColors = p.AvailableColors
                 //    .Where(pc => pc.Color != null)
                 //    .Select(pc => pc.Color!.Name)
