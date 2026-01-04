@@ -9,7 +9,7 @@ namespace Dominus.Application.DTOs.Payment
 {
     public class PaymentDto
     {
-        [DefaultValue("RAZORPAY_PAY_9f8d7s6a5d4")]
+        [DefaultValue("URO_PAY_9f8d7s6a5d4")]
         public string PaymentReference { get; set; } = null!;
     }
 

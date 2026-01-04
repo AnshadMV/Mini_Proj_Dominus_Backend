@@ -19,6 +19,7 @@ namespace Dominus.Application.Services
         private readonly IColorRepository _colorRepo;
         private readonly ICartRepository _cartRepo;
         private readonly IShippingAddressRepository _shippingRepo;
+        private readonly UroPayService _uro;
 
 
         public OrderService(
@@ -26,7 +27,8 @@ namespace Dominus.Application.Services
             IProductRepository productRepo,
             IColorRepository colorRepo,
             ICartRepository cartRepo,
-            IShippingAddressRepository shippingRepo)
+            IShippingAddressRepository shippingRepo,
+            UroPayService uro)
 
         {
             _orderRepo = orderRepo;
@@ -34,7 +36,7 @@ namespace Dominus.Application.Services
             _colorRepo = colorRepo;
             _shippingRepo = shippingRepo;
             _cartRepo = cartRepo;
-
+            _uro = uro;
         }
 
 
@@ -255,25 +257,31 @@ namespace Dominus.Application.Services
 
             var oldStatus = order.Status;
 
+            // Delivered is final
             if (oldStatus == OrderStatus.Delivered)
                 return new ApiResponse<object>(
                     400,
                     "Delivered orders cannot be modified"
                 );
 
-
-
             if (oldStatus == newStatus)
                 return new ApiResponse<object>(
-                    401,
+                    400,
                     "Order already in the requested status"
                 );
 
-            if (
-       oldStatus == OrderStatus.Paid &&
-       (newStatus == OrderStatus.Cancelled ||
-        newStatus == OrderStatus.PendingPayment)
-   )
+            // 🚨 Enforce status order
+            if (!AllowedTransitions.TryGetValue(oldStatus, out var allowedNextStatuses) ||
+                !allowedNextStatuses.Contains(newStatus))
+            {
+                return new ApiResponse<object>(
+                    400,
+                    $"Invalid status change from {oldStatus} to {newStatus}"
+                );
+            }
+
+            // Restore stock if Paid → Cancelled
+            if (oldStatus == OrderStatus.Paid && newStatus == OrderStatus.Cancelled)
             {
                 foreach (var item in order.Items)
                 {
@@ -285,18 +293,15 @@ namespace Dominus.Application.Services
                     }
                 }
             }
-            if (oldStatus == OrderStatus.Delivered)
-                return new ApiResponse<object>(
-                    400,
-                    "Delivered orders cannot be modified"
-                );
-            if (newStatus == OrderStatus.PendingPayment)
+
+            // Reset payment info if cancelled
+            if (newStatus == OrderStatus.Cancelled)
             {
                 order.PaymentReference = null;
                 order.PaidOn = null;
             }
-            order.Status = newStatus;
 
+            order.Status = newStatus;
             await _orderRepo.SaveChangesAsync();
 
             return new ApiResponse<object>(
@@ -304,6 +309,7 @@ namespace Dominus.Application.Services
                 $"Order status changed from {oldStatus} to {newStatus}"
             );
         }
+
 
         public async Task<ApiResponse<PagedResult<OrderDto>>> GetAllOrdersForAdminAsync(
     int page,
@@ -358,6 +364,57 @@ namespace Dominus.Application.Services
         }
 
 
+        public async Task<ApiResponse<object>> CreateUroPaySessionAsync(string userId, int orderId)
+        {
+            var order = await _orderRepo.GetByIdWithItemsAsync(orderId);
+
+            if (order == null || order.UserId != userId)
+                return new ApiResponse<object>(404, "Order not found");
+
+            if (order.Status != OrderStatus.PendingPayment)
+                return new ApiResponse<object>(400, "Already paid");
+
+            try
+            {
+                var (uroId, qr, upi) = await _uro.CreatePayment(order.TotalAmount, order.Id.ToString(), "customer@email.com", "Customer");
+
+                order.UroPayOrderId = uroId;
+                await _orderRepo.SaveChangesAsync();
+
+                return new ApiResponse<object>(200, "Payment initiated", new
+                {
+                    qrCode = qr,
+                    upiString = upi,
+                    uroPayOrderId = uroId
+                });
+
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<object>(500, "Payment Error: " + ex.Message);
+            }
+        }
+
+        private static readonly Dictionary<OrderStatus, OrderStatus[]> AllowedTransitions =
+    new()
+    {
+        {
+            OrderStatus.PendingPayment,
+            new[] { OrderStatus.Cancelled, OrderStatus.Paid }
+        },
+        {
+            OrderStatus.Paid,
+            new[] { OrderStatus.Shipped }
+        },
+        {
+            OrderStatus.Shipped,
+            new[] { OrderStatus.Delivered }
+        },
+        {
+            OrderStatus.Delivered,
+            Array.Empty<OrderStatus>()
+        }
+    };
 
 
     }

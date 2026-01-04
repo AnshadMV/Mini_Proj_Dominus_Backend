@@ -1,3 +1,4 @@
+using Dominus.Application.DTOs.Payment;
 using Dominus.Application.Services;
 using Dominus.Domain.Interfaces;
 //using Dominus.Infrastructure.Cloudinary;
@@ -10,11 +11,11 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
-using Serilog;
 
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 ServicePointManager.Expect100Continue = false;
@@ -189,6 +190,9 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 });
 
 
+builder.Services.Configure<UroPaySettings>(
+    builder.Configuration.GetSection("UroPay"));
+builder.Services.AddHttpClient<UroPayService>();
 
 
 builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>

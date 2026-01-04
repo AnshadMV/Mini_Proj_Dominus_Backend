@@ -81,6 +81,13 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpPost("CreatePayment/{orderId}")]
+        [Authorize(Policy = "user")]
+        public async Task<IActionResult> CreatePayment(int orderId)
+        {
+            var response = await _service.CreateUroPaySessionAsync(UserId, orderId);
+            return StatusCode(response.StatusCode, response);
+        }
 
 
 

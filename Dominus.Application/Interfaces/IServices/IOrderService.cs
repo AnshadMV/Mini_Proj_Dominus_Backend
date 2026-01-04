@@ -15,6 +15,7 @@ namespace Dominus.Application.Interfaces.IServices
         Task<ApiResponse<PagedResult<OrderDto>>> GetAllOrdersForAdminAsync(int page,int pageSize, OrderStatus? status)
             ;
 
+        Task<ApiResponse<object>> CreateUroPaySessionAsync(string userId, int orderId);
 
     }
 }
