@@ -41,7 +41,8 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IImageStorageService, CloudinaryService>();
             services.AddScoped<IShippingAddressService, ShippingAddressService>();
-            
+            services.AddScoped<IEmailService, EmailService>();
+
             return services;
         }
     }

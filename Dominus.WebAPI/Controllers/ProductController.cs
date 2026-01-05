@@ -36,6 +36,23 @@ namespace Dominus.WebAPI.Controllers
             }
             return Ok(new ApiResponse<object>(200, "Products fetched successfully", products));
         }
+        [HttpGet("User/GetAll")]
+        [AllowAnonymous]
+
+        public async Task<IActionResult> GetAllForUser()
+        {
+            var products = await _productService.GetAllProductsUserAsync();
+            if (!products.Any())
+            {
+                return Ok(new ApiResponse<IEnumerable<ProductDto>>(
+                    404,
+                    "No products available",
+                    Enumerable.Empty<ProductDto>()
+                ));
+            }
+            return Ok(new ApiResponse<object>(200, "Products fetched successfully", products));
+        }
+        
         [HttpPost("Admin/Create")]
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> Create([FromForm] CreateProductDto dto)

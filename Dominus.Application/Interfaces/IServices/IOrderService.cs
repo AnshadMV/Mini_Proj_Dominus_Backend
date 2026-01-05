@@ -16,6 +16,7 @@ namespace Dominus.Application.Interfaces.IServices
             ;
 
         Task<ApiResponse<object>> CreateUroPaySessionAsync(string userId, int orderId);
+        Task<ApiResponse<object>> CancelOrderAsync(string userId, int orderId);
 
     }
 }

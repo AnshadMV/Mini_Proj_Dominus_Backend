@@ -14,6 +14,7 @@ namespace Dominus.Domain.Interfaces
         Task<Order?> GetByIdWithItemsAsync(int orderId);
 
         Task<List<Order>> GetAllWithItemsAsync();
+        Task<Product?> GetByIdTrackedAsync(int id);
 
     }
 }

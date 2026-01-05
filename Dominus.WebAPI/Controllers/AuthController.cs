@@ -239,6 +239,22 @@ namespace Dominus.WebAPI.Controllers
 
         }
 
+        [AllowAnonymous]
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SendOtp(ForgotPasswordDto dto)
+        {
+            var result = await _authService.SendOtpAsync(dto.Email);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+        {
+            var result = await _authService.ResetPasswordAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
 
     }
 }

@@ -472,17 +472,72 @@ namespace Dominus.Application.Services
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
-            var products = await _productRepository.GetAllAsync(
-                predicate: p => !p.IsDeleted,
-                include: q => q
-                    .Include(p => p.Category)
-                    .Include(p => p.Images)
-                    .Include(p => p.AvailableColors)
-                        .ThenInclude(pc => pc.Color)
-            );
+            return await _productRepository.Query()
+    .Where(p => !p.IsDeleted)
+    .AsNoTracking()
+    .Select(p => new ProductDto
+    {
+        Id = p.Id,
+        Name = p.Name,
+        Price = p.Price,
+        Description = p.Description,
+        CategoryId = p.CategoryId,
+        CategoryName = p.Category.Name,
+        CurrentStock = p.CurrentStock,
+        InStock = p.InStock,
+        IsActive = p.IsActive,
+        TopSelling = p.TopSelling,
+        Warranty = p.Warranty,
+        Images = p.Images
+            .Where(i => !i.IsDeleted)
+            .Select(i => i.ImageUrl)
+            .ToList(),
+        AvailableColors = p.AvailableColors
+            .Where(c => c.Color.IsActive && !c.Color.IsDeleted)
+            .Select(c => c.Color.Name)
+            .ToList()
+    })
+    .ToListAsync();
 
-            return products.Select(MapToDTO);
         }
+
+
+
+        public async Task<IEnumerable<ProductDto>> GetAllProductsUserAsync()
+        {
+            return await _productRepository.Query()
+    .Where(p => !p.IsDeleted & !p.IsActive )
+    .AsNoTracking()
+    .Select(p => new ProductDto
+    {
+        Id = p.Id,
+        Name = p.Name,
+        Price = p.Price,
+        Description = p.Description,
+        CategoryId = p.CategoryId,
+        CategoryName = p.Category.Name,
+        CurrentStock = p.CurrentStock,
+        InStock = p.InStock,
+        IsActive = p.IsActive,
+        TopSelling = p.TopSelling,
+        Warranty = p.Warranty,
+        Images = p.Images
+            .Where(i => !i.IsDeleted)
+            .Select(i => i.ImageUrl)
+            .ToList(),
+        AvailableColors = p.AvailableColors
+            .Where(c => c.Color.IsActive && !c.Color.IsDeleted)
+            .Select(c => c.Color.Name)
+            .ToList()
+    })
+    .ToListAsync();
+
+        }
+
+
+
+
+
 
 
         public async Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(int categoryId)

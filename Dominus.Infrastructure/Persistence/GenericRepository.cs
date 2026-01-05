@@ -76,6 +76,11 @@ namespace Dominus.Infrastructure.Persistence
         {
             return _context.Set<T>().AsNoTracking();
         }
+        public async Task<Product?> GetByIdTrackedAsync(int id)
+        {
+            return await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
 
 
     }

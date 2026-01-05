@@ -1,3 +1,4 @@
+using Dominus.Application.DTOs.UserProfile;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
@@ -13,14 +14,17 @@ namespace Dominus.Application.Services
         private readonly IGenericRepository<User> _userRepository;
         private readonly IUserRepository _userRepositoryExtended;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IEmailService _emailService;
 
         public UserService(
             IGenericRepository<User> userRepository,
-            IUserRepository userRepositoryExtended, IHttpContextAccessor httpContextAccessor)
+            IUserRepository userRepositoryExtended, IHttpContextAccessor httpContextAccessor, IEmailService emailService)
         {
             _userRepository = userRepository;
             _userRepositoryExtended = userRepositoryExtended;
             _httpContextAccessor = httpContextAccessor;
+            _emailService = emailService;
+
         }
 
         public async Task<ApiResponse<IEnumerable<User>>> GetAllUsersAsync()
@@ -110,5 +114,12 @@ namespace Dominus.Application.Services
                 "deleted"
             );
         }
+
+
+
+      
+
+
+
     }
 }

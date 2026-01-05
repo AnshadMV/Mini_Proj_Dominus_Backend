@@ -22,6 +22,8 @@ namespace Dominus.Application.Interfaces.IServices
         Task<AuthResponseDto> GenerateAccessTokenFromRefreshAsync(string refreshToken);
         Task<AuthResponseDto> ForgotPasswordAsync(string email);
         Task<AuthResponseDto> ResetPasswordAsync(string token, string newPassword);
+        Task<ApiResponse<string>> SendOtpAsync(string email);
+        Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordDto dto);
 
     }
 }

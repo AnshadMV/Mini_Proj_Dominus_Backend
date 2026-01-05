@@ -105,7 +105,8 @@ namespace Dominus.Application.Services
                         400,
                         $"Color not available for {product.Name}"
                     );
-
+                product.CurrentStock -= item.Quantity;
+                product.InStock = product.CurrentStock > 0;
                 order.Items.Add(new OrderItem
                 {
                     ProductId = product.Id,
@@ -121,6 +122,7 @@ namespace Dominus.Application.Services
 
             await _orderRepo.AddAsync(order);
             await _orderRepo.SaveChangesAsync();
+            await _productRepo.SaveChangesAsync();  
 
             return new ApiResponse<OrderDto>(
                 200,
@@ -216,8 +218,6 @@ namespace Dominus.Application.Services
                 if (product.CurrentStock < item.Quantity)
                     return new ApiResponse<object>(400, $"Insufficient stock for {product.Name}");
 
-                product.CurrentStock -= item.Quantity;
-                product.InStock = product.CurrentStock > 0;
             }
             var cart = await _cartRepo.GetByUserIdAsync(userId);
 
@@ -280,8 +280,8 @@ namespace Dominus.Application.Services
                 );
             }
 
-            // Restore stock if Paid → Cancelled
-            if (oldStatus == OrderStatus.Paid && newStatus == OrderStatus.Cancelled)
+            // Restore stock ONLY when PendingPayment → Cancelled
+            if (oldStatus == OrderStatus.PendingPayment && newStatus == OrderStatus.Cancelled)
             {
                 foreach (var item in order.Items)
                 {
@@ -289,17 +289,25 @@ namespace Dominus.Application.Services
                     if (product != null)
                     {
                         product.CurrentStock += item.Quantity;
-                        product.InStock = true;
+                        product.InStock = product.CurrentStock > 0;
                     }
                 }
-            }
 
-            // Reset payment info if cancelled
-            if (newStatus == OrderStatus.Cancelled)
-            {
                 order.PaymentReference = null;
                 order.PaidOn = null;
+
+                await _productRepo.SaveChangesAsync();
+
             }
+
+
+
+            //// Reset payment info if cancelled
+            //if (newStatus == OrderStatus.Cancelled)
+            //{
+            //    order.PaymentReference = null;
+            //    order.PaidOn = null;
+            //}
 
             order.Status = newStatus;
             await _orderRepo.SaveChangesAsync();
@@ -320,8 +328,8 @@ namespace Dominus.Application.Services
             page = page <= 0 ? 1 : page;
             pageSize = pageSize switch
             {
-                <= 0 => 10,
-                > 100 => 100,
+                <= 0 => 100,
+                > 100 => 1000,
                 _ => pageSize
             };
 
@@ -362,6 +370,39 @@ namespace Dominus.Application.Services
                 result
             );
         }
+
+       public async Task<ApiResponse<object>> CancelOrderAsync(string userId, int orderId)
+{
+    var order = await _orderRepo.GetByIdWithItemsAsync(orderId);
+
+    if (order == null || order.UserId != userId)
+        return new ApiResponse<object>(404, "Order not found");
+
+    if (order.Status != OrderStatus.PendingPayment)
+        return new ApiResponse<object>(400, "Only PendingPayment orders can be cancelled");
+
+    // 🔥 RESTORE STOCK
+    foreach (var item in order.Items)
+    {
+                var product = await _productRepo.GetByIdTrackedAsync(item.ProductId);
+
+                if (product != null)
+        {
+            product.CurrentStock += item.Quantity;
+            product.InStock = product.CurrentStock > 0;
+        }
+    }
+
+    order.Status = OrderStatus.Cancelled;
+    order.PaymentReference = null;
+    order.PaidOn = null;
+
+    await _orderRepo.SaveChangesAsync();
+    await _productRepo.SaveChangesAsync();
+
+    return new ApiResponse<object>(200, "Order cancelled successfully");
+}
+
 
 
         public async Task<ApiResponse<object>> CreateUroPaySessionAsync(string userId, int orderId)

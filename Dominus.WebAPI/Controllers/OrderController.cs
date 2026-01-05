@@ -1,5 +1,6 @@
 ﻿using Dominus.Application.DTOs.Payment;
 using Dominus.Application.Interfaces.IServices;
+using Dominus.Application.Services;
 using Dominus.Domain.DTOs.OrderDTOs;
 using Dominus.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -45,6 +46,14 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
+        [HttpPatch("Cancel")]
+        [Authorize(Policy = "user")]
+        public async Task<IActionResult> CancelOrder([FromQuery] int orderId)
+        {
+            var response = await _service.CancelOrderAsync(UserId, orderId);
+            return StatusCode(response.StatusCode, response);
+        }
+
 
 
         [HttpPost("PayBy_{orderId}")]
@@ -69,7 +78,7 @@ namespace Dominus.WebAPI.Controllers
         [Authorize(Policy = "Admin")]
         public async Task<IActionResult> GetAllOrdersForAdmin(
      [FromQuery] int page = 1,
-     [FromQuery] int pageSize = 10,
+     [FromQuery] int pageSize = 100,
      [FromQuery] OrderStatus? status = null)
         {
             var response = await _service.GetAllOrdersForAdminAsync(

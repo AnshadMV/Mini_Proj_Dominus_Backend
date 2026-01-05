@@ -16,6 +16,9 @@ namespace Dominus.Application.Interfaces.IServices
         Task<ProductDto?> GetProductByIdAsync(int id);
         Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(int categoryId);
         Task<IEnumerable<ProductDto>> GetAllProductsAsync();
+        Task<IEnumerable<ProductDto>> GetAllProductsUserAsync();
+
+        
         Task<ApiResponse<ProductDto>> UpdateProductAsync(UpdateProductDto dto);
 
         Task<ApiResponse<string>> DeleteProductAsync(int id);

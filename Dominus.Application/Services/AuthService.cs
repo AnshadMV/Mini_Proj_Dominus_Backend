@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace Dominus.Application.Services
 {
@@ -18,14 +19,18 @@ namespace Dominus.Application.Services
     {
         private readonly IGenericRepository<User> _userRepository;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
         public AuthService(
-            IGenericRepository<User> userRepository,
-            IConfiguration configuration)
+      IGenericRepository<User> userRepository,
+      IConfiguration configuration,
+      IEmailService emailService)
         {
             _userRepository = userRepository;
             _configuration = configuration;
+            _emailService = emailService;
         }
+
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto registerRequestDto)
         {
@@ -338,6 +343,62 @@ namespace Dominus.Application.Services
             return new AuthResponseDto(201, "Password reset successfully");
         }
 
+        public async Task<ApiResponse<string>> SendOtpAsync(string email)
+        {
+            var user = await _userRepository.GetAsync(u => u.Email == email);
+
+            if (user == null || user.IsDeleted)
+                return new ApiResponse<string>(404, "User not found");
+
+            if (user.IsBlocked)
+                return new ApiResponse<string>(403, "Blocked user cannot reset password");
+
+            string otp = new Random().Next(100000, 999999).ToString();
+            DateTime expiry = DateTime.UtcNow.AddMinutes(10);
+
+            user.PasswordOtp = otp;
+            user.PasswordOtpExpiry = expiry;
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            string body = $@"
+        <h2>Password Reset</h2>
+        <p>Your OTP code is:</p>
+        <h1 style='color:#2d89ef'>{otp}</h1>
+        <p>Valid for 10 minutes.</p>
+    ";
+
+            await _emailService.SendEmailAsync(email, "Password Reset OTP", body);
+
+            return new ApiResponse<string>(200, "OTP sent to email.");
+        }
+        public async Task<ApiResponse<string>> ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            var user = await _userRepository.GetAsync(u => u.Email == dto.Email);
+
+            if (user == null)
+                return new ApiResponse<string>(404, "User not found");
+
+            if (string.IsNullOrEmpty(user.PasswordOtp))
+                return new ApiResponse<string>(400, "No OTP generated");
+
+            if (user.PasswordOtpExpiry == null || user.PasswordOtpExpiry <= DateTime.UtcNow)
+                return new ApiResponse<string>(400, "OTP expired");
+
+            if (user.PasswordOtp != dto.Otp)
+                return new ApiResponse<string>(400, "Incorrect OTP");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+
+            user.PasswordOtp = null;
+            user.PasswordOtpExpiry = null;
+
+            _userRepository.Update(user);
+            await _userRepository.SaveChangesAsync();
+
+            return new ApiResponse<string>(200, "Password reset successfully.");
+        }
 
 
     }

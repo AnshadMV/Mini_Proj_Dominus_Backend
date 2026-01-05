@@ -23,6 +23,10 @@ namespace Dominus.Domain.Entities
         public ICollection<ShippingAddress> ShippingAddresses { get; set; }
     = new List<ShippingAddress>();
 
+        public string? PasswordOtp { get; set; }
+        public DateTime? PasswordOtpExpiry { get; set; }
+
+
     }
 
 }
