@@ -1,4 +1,4 @@
-﻿namespace Dominus.Domain.DTOs.OrderDTOs
+﻿namespace Dominus.Application.DTOs.OrderDTOs
 {
     public class OrderItemDto
     {

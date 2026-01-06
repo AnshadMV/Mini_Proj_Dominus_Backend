@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace Dominus.Domain.DTOs.ProductDTOs
+namespace Dominus.Application.DTOs.ProductDTOs
 {
     public class CreateProductDto
     {

@@ -3,7 +3,7 @@ using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ProductDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Entities.Dominus.Domain.Entities;
 using Dominus.Domain.Interfaces;

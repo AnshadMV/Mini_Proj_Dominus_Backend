@@ -1,6 +1,6 @@
 ﻿using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.CategoryDTOs;
+using Dominus.Application.DTOs.CategoryDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

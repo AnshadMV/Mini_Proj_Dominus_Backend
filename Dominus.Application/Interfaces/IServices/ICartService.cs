@@ -1,5 +1,5 @@
 ﻿using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.CartDTOs;
+using Dominus.Application.DTOs.CartDTOs;
 
 namespace Dominus.Application.Interfaces.IServices
 {

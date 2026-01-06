@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dominus.Domain.DTOs.ColorDTOs
+namespace Dominus.Application.DTOs.ColorDTOs
 {
     
     

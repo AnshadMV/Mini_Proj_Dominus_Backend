@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace Dominus.Domain.DTOs.AuthDTOs
+namespace Dominus.Application.DTOs.AuthDTOs
 {
     public class RegisterRequestDto
     {

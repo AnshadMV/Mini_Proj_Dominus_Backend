@@ -1,5 +1,5 @@
 ﻿using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.CategoryDTOs;
+using Dominus.Application.DTOs.CategoryDTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

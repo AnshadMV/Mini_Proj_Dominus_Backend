@@ -1,7 +1,7 @@
 ﻿using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ColorDTOs;
+using Dominus.Application.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
 using System.Text.RegularExpressions;
 

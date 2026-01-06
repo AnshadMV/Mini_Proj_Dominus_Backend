@@ -1,5 +1,6 @@
 using Dominus.Application.DTOs.Payment;
 using Dominus.Application.Services;
+using Dominus.Application.Settings.Dominus.Application.Settings;
 using Dominus.Domain.Interfaces;
 //using Dominus.Infrastructure.Cloudinary;
 //using Dominus.Infrastructure.Cloudinary;
@@ -35,21 +36,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-
-
-
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddRepositories();
 builder.Services.AddServices();
 
 
-
-
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret is not configured. Please set 'Jwt:Secret' in appsettings.json");
 var key = Encoding.ASCII.GetBytes(jwtSecret);
-
-
-
 
 builder.Services.AddAuthentication(options =>
 {
@@ -73,10 +66,8 @@ builder.Services.AddAuthentication(options =>
 
     options.Events = new JwtBearerEvents
     {
-        // ?? THIS IS THE KEY FIX ??
         OnMessageReceived = context =>
         {
-            // Read JWT from HttpOnly cookie
             var token = context.Request.Cookies["accessToken"];
             if (!string.IsNullOrEmpty(token))
             {
@@ -117,25 +108,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
-
-
-
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalDev", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "https://localhost:3000",
-                "http://localhost:5173",
-                "https://localhost:5173",
-                "http://localhost:4200",
-                "https://localhost:4200",
-                "http://localhost:5180",
-                "https://localhost:7121"
-            )
+        policy.WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
@@ -143,19 +120,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-
-
-
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireRole("admin", "Admin"));
     options.AddPolicy("User", policy => policy.RequireRole("user", "User"));
 });
-
-
-
-
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -164,12 +133,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-
-
-
 builder.Services.AddHttpContextAccessor();
-
-
 
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -177,10 +141,6 @@ builder.Services.Configure<FormOptions>(options =>
     options.MultipartBodyLengthLimit = int.MaxValue;
     options.MemoryBufferThreshold = int.MaxValue;
 });
-
-
-
-
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -190,9 +150,12 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 });
 
 
-builder.Services.Configure<UroPaySettings>(
-    builder.Configuration.GetSection("UroPay"));
-builder.Services.AddHttpClient<UroPayService>();
+
+
+builder.Services.Configure<RazorpaySettings>(
+    builder.Configuration.GetSection("Razorpay"));
+builder.Services.AddSingleton<RazorpayService>();
+
 
 
 builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
@@ -203,28 +166,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 
 builder.Services.AddEndpointsApiExplorer();
 
-
-
 builder.Services.AddSwaggerGen(c =>
 {
-    //c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dominus API", Version = "v1" });
-
-
-    //If you want the option to choose between two servers (https://localhost:7121 and http://localhost:5180) but manage them effectively based on the environment (Development, Production, etc.), you can use IConfiguration to set which server URL to use dynamically. This way, you can keep both but not confuse users in production.
-    //c.AddServer(new OpenApiServer { Url = "https://localhost:7121", Description = "HTTPS Server" });
-    //c.AddServer(new OpenApiServer { Url = "http://localhost:5180", Description = "HTTP Server" });
-
-
-
-    //c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    //{
-    //    Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
-    //    Name = "Authorization",
-    //    In = ParameterLocation.Header,
-    //    Type = SecuritySchemeType.ApiKey,
-    //    Scheme = "Bearer"
-    //});
-
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -253,25 +196,9 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
-//builder.Services.Configure<CloudinarySettings>(
-//    builder.Configuration.GetSection("Cloudinary")
-//);
-
-//builder.Services.AddScoped<IImageStorageService, CloudinaryService>();
-
-
 var app = builder.Build();
-
-
-
-
 app.UseGlobalExceptionHandler();
-
-
-
-
-
-
+//MIGRATION
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -286,7 +213,6 @@ using (var scope = app.Services.CreateScope())
         throw;
     }
 }
-
 
 
 if (app.Environment.IsDevelopment())
@@ -329,47 +255,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-//app.MapGet("/", () => Results.Redirect("/swagger"));
-
-// CORS must be before UseHttpsRedirection, UseAuthentication and UseAuthorization
-// This ensures CORS headers are set for all requests including preflight
 app.UseCors("AllowLocalDev");
 
-// Handle preflight requests explicitly
-//app.Use(async (context, next) =>
-//{
-//    if (context.Request.Method == "OPTIONS")
-//    {
-//        context.Response.Headers.Add("Access-Control-Allow-Origin", context.Request.Headers["Origin"]);
-//        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-//        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-//        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-//        context.Response.StatusCode = 200;
-//        await context.Response.WriteAsync(string.Empty);
-//        return;
-//    }
-//    await next();
-//});
-
-
-// Global exception handler middleware for development
-//if (app.Environment.IsDevelopment())
-//{
-//    app.Use(async (context, next) =>
-//    {
-//        try
-//        {
-//            await next();
-//        }
-//        catch (Exception ex)
-//        {
-//            Console.WriteLine($"Unhandled exception: {ex.Message}");
-//            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-//            context.Response.StatusCode = 500;
-//            await context.Response.WriteAsync($"An error occurred: {ex.Message}");
-//        }
-//    });
-//}
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

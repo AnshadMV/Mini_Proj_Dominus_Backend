@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Dominus.Domain.DTOs.WishlistDTOs
+namespace Dominus.Application.DTOs.WishlistDTOs
 {
     public class WishlistDto
     {

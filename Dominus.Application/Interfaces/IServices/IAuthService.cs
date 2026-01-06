@@ -1,6 +1,6 @@
 ﻿using Dominus.Application.DTOs.UserProfile;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.AuthDTOs;
+using Dominus.Application.DTOs.AuthDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

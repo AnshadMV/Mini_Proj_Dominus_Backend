@@ -3,7 +3,7 @@ using Dominus.Application.DTOs.UserProfile;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.AuthDTOs;
+using Dominus.Application.DTOs.AuthDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Enums;
 using Microsoft.Extensions.Configuration;

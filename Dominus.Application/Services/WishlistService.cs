@@ -1,8 +1,8 @@
 ﻿using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.CartDTOs;
-using Dominus.Domain.DTOs.WishlistDTOs;
+using Dominus.Application.DTOs.CartDTOs;
+using Dominus.Application.DTOs.WishlistDTOs;
 using Dominus.Domain.Entities;
 
 namespace Dominus.Application.Services

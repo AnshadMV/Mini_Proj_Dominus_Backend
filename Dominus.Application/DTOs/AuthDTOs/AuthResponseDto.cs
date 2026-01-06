@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Dominus.Domain.DTOs.AuthDTOs
+namespace Dominus.Application.DTOs.AuthDTOs
 {
     public class AuthResponseDto
     {

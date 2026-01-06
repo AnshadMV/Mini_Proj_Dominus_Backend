@@ -1,5 +1,5 @@
 ﻿using Dominus.Application.Interfaces.IServices;
-using Dominus.Domain.DTOs.CartDTOs;
+using Dominus.Application.DTOs.CartDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

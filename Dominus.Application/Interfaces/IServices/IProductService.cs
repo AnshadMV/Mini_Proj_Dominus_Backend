@@ -1,7 +1,7 @@
 ﻿using Dominus.Application.DTOs.P_ImageDTOs;
 using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ProductDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

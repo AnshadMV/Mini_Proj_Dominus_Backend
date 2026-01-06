@@ -15,9 +15,8 @@ namespace Dominus.Domain.Entities
         public string? PaymentReference { get; set; }
         public DateTime? PaidOn { get; set; }
 
-        public OrderStatus Status { get; set; } = OrderStatus.PendingPayment; 
-        public string? UroPayOrderId { get; set; }
-
+        public OrderStatus Status { get; set; } = OrderStatus.PendingPayment;
+        public string? RazorOrderId { get; set; }
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }

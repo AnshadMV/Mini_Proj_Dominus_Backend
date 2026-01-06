@@ -1,5 +1,5 @@
 ﻿using Dominus.Application.Interfaces.IServices;
-using Dominus.Domain.DTOs.WishlistDTOs;
+using Dominus.Application.DTOs.WishlistDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

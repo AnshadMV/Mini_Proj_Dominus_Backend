@@ -1,14 +1,18 @@
 ﻿using Dominus.Application.DTOs.Payment;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
+using Dominus.Application.Settings.Dominus.Application.Settings;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.OrderDTOs;
+using Dominus.Application.DTOs.OrderDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Enums;
 using Dominus.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
+using DomainOrder = Dominus.Domain.Entities.Order;
+using RzOrder = Razorpay.Api.Order;
 
 namespace Dominus.Application.Services
 {
@@ -19,52 +23,47 @@ namespace Dominus.Application.Services
         private readonly IColorRepository _colorRepo;
         private readonly ICartRepository _cartRepo;
         private readonly IShippingAddressRepository _shippingRepo;
-        private readonly UroPayService _uro;
 
+        private readonly RazorpayService _razor;
+        private readonly RazorpaySettings _razorSettings;
 
         public OrderService(
-            IOrderRepository orderRepo,
-            IProductRepository productRepo,
-            IColorRepository colorRepo,
-            ICartRepository cartRepo,
-            IShippingAddressRepository shippingRepo,
-            UroPayService uro)
-
+             IOrderRepository orderRepo,
+             IProductRepository productRepo,
+             IColorRepository colorRepo,
+             ICartRepository cartRepo,
+             IShippingAddressRepository shippingRepo,
+             RazorpayService razor,
+             IOptions<RazorpaySettings> razorOptions)
         {
             _orderRepo = orderRepo;
             _productRepo = productRepo;
             _colorRepo = colorRepo;
             _shippingRepo = shippingRepo;
             _cartRepo = cartRepo;
-            _uro = uro;
+
+            _razor = razor;
+            _razorSettings = razorOptions.Value;
         }
 
 
-        public async Task<ApiResponse<OrderDto>> CreateOrderAsync(
-             string userId,
-             CreateOrderDto dto)
+
+        public async Task<ApiResponse<OrderDto>> CreateOrderAsync(string userId, CreateOrderDto dto)
         {
             if (dto.Items == null || !dto.Items.Any())
                 return new ApiResponse<OrderDto>(400, "No order items provided");
 
             int uid = int.Parse(userId);
 
-            // 🔥 Get Active Shipping Address
             var addresses = await _shippingRepo.GetByUserIdAsync(uid);
-
-            var activeAddress = addresses
-                .FirstOrDefault(a => !a.IsDeleted && a.IsActive);
+            var activeAddress = addresses.FirstOrDefault(a => !a.IsDeleted && a.IsActive);
 
             if (activeAddress == null)
-                return new ApiResponse<OrderDto>(
-                    400,
-                    "No active shipping address found. Please set one before ordering."
-                );
+                return new ApiResponse<OrderDto>(400, "No active shipping address found. Please set one before ordering.");
 
-            string finalAddress =
-                $"{activeAddress.AddressLine}, {activeAddress.City}, {activeAddress.State} - {activeAddress.Pincode}";
+            string finalAddress = $"{activeAddress.AddressLine}, {activeAddress.City}, {activeAddress.State} - {activeAddress.Pincode}";
 
-            var order = new Order
+            var order = new DomainOrder
             {
                 UserId = userId,
                 ShippingAddress = finalAddress,
@@ -84,10 +83,7 @@ namespace Dominus.Application.Services
                     return new ApiResponse<OrderDto>(400, $"{product.Name} is not available");
 
                 if (product.CurrentStock < item.Quantity)
-                    return new ApiResponse<OrderDto>(
-                        400,
-                        $"Insufficient stock for {product.Name}"
-                    );
+                    return new ApiResponse<OrderDto>(400, $"Insufficient stock for {product.Name}");
 
                 var color = await _colorRepo.GetByIdAsync(item.ColorId);
 
@@ -97,16 +93,13 @@ namespace Dominus.Application.Services
                 if (!color.IsActive)
                     return new ApiResponse<OrderDto>(400, "Selected color is inactive");
 
-                var colorMappedToProduct = product.AvailableColors
-                    .Any(pc => pc.ColorId == item.ColorId && !pc.IsDeleted);
-
+                var colorMappedToProduct = product.AvailableColors.Any(pc => pc.ColorId == item.ColorId && !pc.IsDeleted);
                 if (!colorMappedToProduct)
-                    return new ApiResponse<OrderDto>(
-                        400,
-                        $"Color not available for {product.Name}"
-                    );
+                    return new ApiResponse<OrderDto>(400, $"Color not available for {product.Name}");
+
                 product.CurrentStock -= item.Quantity;
                 product.InStock = product.CurrentStock > 0;
+
                 order.Items.Add(new OrderItem
                 {
                     ProductId = product.Id,
@@ -120,16 +113,26 @@ namespace Dominus.Application.Services
 
             order.TotalAmount = total;
 
+            // Add order and save to ensure order.Id is populated by EF (so Razor order receipt can use it).
             await _orderRepo.AddAsync(order);
             await _orderRepo.SaveChangesAsync();
-            await _productRepo.SaveChangesAsync();  
 
-            return new ApiResponse<OrderDto>(
-                200,
-                "Order placed successfully",
-                Map(order)
-            );
+            // Persist product stock changes
+            await _productRepo.SaveChangesAsync();
+
+            // Create Razorpay order using the DB-generated order.Id
+            var razorOrder = _razor.CreateOrder(order.TotalAmount, $"ORD_{order.Id}");
+            order.RazorOrderId = razorOrder["id"].ToString();
+            await _orderRepo.SaveChangesAsync();
+
+            var mapped = Map(order);
+            mapped.RazorOrderId = order.RazorOrderId;
+            mapped.RazorKey = _razorSettings.Key;
+
+            return new ApiResponse<OrderDto>(200, "Order placed successfully", mapped);
         }
+
+
 
         public async Task<ApiResponse<List<OrderDto>>> GetMyOrdersAsync(string userId)
         {
@@ -165,7 +168,7 @@ namespace Dominus.Application.Services
         }
 
 
-        private static OrderDto Map(Order order) => new()
+        private OrderDto Map(Order order) => new()
         {
             OrderId = order.Id,
             OrderDate = order.OrderDate,
@@ -173,7 +176,8 @@ namespace Dominus.Application.Services
             Status = order.Status.ToString(),
             TotalAmount = order.TotalAmount,
             ShippingAddress = order.ShippingAddress,
-
+            RazorOrderId = order.RazorOrderId,
+            RazorKey = _razorSettings.Key,
             Items = order.Items.Select(i => new OrderItemDto
             {
                 ProductId = i.ProductId,
@@ -195,57 +199,6 @@ namespace Dominus.Application.Services
 
 
 
-        public async Task<ApiResponse<object>> PayForOrderAsync(
-    string userId,
-    int orderId,
-    PaymentDto dto)
-        {
-            var order = await _orderRepo.GetByIdWithItemsAsync(orderId);
-
-            if (order == null || order.UserId != userId)
-                return new ApiResponse<object>(404, "Order not found");
-
-            if (order.Status != OrderStatus.PendingPayment)
-                return new ApiResponse<object>(400, "Order already paid or invalid");
-
-            foreach (var item in order.Items)
-            {
-                var product = await _productRepo.GetByIdTrackedAsync(item.ProductId);
-
-                if (product == null || product.IsDeleted || !product.IsActive)
-                    return new ApiResponse<object>(400, "Product unavailable");
-
-                if (product.CurrentStock < item.Quantity)
-                    return new ApiResponse<object>(400, $"Insufficient stock for {product.Name}");
-
-            }
-            var cart = await _cartRepo.GetByUserIdAsync(userId);
-
-            if (cart != null)
-            {
-                var orderedProductIds = order.Items
-                    .Select(i => i.ProductId)
-                    .ToHashSet();
-
-                foreach (var cartItem in cart.Items
-                    .Where(i => !i.IsDeleted && orderedProductIds.Contains(i.ProductId)))
-                {
-                    cartItem.IsDeleted = true;
-                }
-            }
-
-            order.Status = OrderStatus.Paid;
-            order.PaymentReference = dto.PaymentReference;
-            order.PaidOn = DateTime.UtcNow;
-
-
-            await _orderRepo.SaveChangesAsync();
-
-            return new ApiResponse<object>(
-                201,
-                "Payment successful, order confirmed"
-            );
-        }
         public async Task<ApiResponse<object>> AdminUpdateOrderStatusAsync(
     int orderId,
     OrderStatus newStatus)
@@ -405,37 +358,7 @@ namespace Dominus.Application.Services
 
 
 
-        public async Task<ApiResponse<object>> CreateUroPaySessionAsync(string userId, int orderId)
-        {
-            var order = await _orderRepo.GetByIdWithItemsAsync(orderId);
-
-            if (order == null || order.UserId != userId)
-                return new ApiResponse<object>(404, "Order not found");
-
-            if (order.Status != OrderStatus.PendingPayment)
-                return new ApiResponse<object>(400, "Already paid");
-
-            try
-            {
-                var (uroId, qr, upi) = await _uro.CreatePayment(order.TotalAmount, order.Id.ToString(), "customer@email.com", "Customer");
-
-                order.UroPayOrderId = uroId;
-                await _orderRepo.SaveChangesAsync();
-
-                return new ApiResponse<object>(200, "Payment initiated", new
-                {
-                    qrCode = qr,
-                    upiString = upi,
-                    uroPayOrderId = uroId
-                });
-
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<object>(500, "Payment Error: " + ex.Message);
-            }
-        }
-
+       
         private static readonly Dictionary<OrderStatus, OrderStatus[]> AllowedTransitions =
     new()
     {
@@ -456,6 +379,33 @@ namespace Dominus.Application.Services
             Array.Empty<OrderStatus>()
         }
     };
+        public async Task<ApiResponse<object>> VerifyPaymentAsync(string userId, RazorVerifyDto dto)
+        {
+            var order = await _orderRepo.GetByIdWithItemsAsync(dto.OrderId);
+
+            if (order == null || order.UserId != userId)
+                return new ApiResponse<object>(404, "Order not found");
+
+            try
+            {
+                _razor.Verify(dto.RazorOrderId, dto.PaymentId, dto.Signature);
+
+                order.Status = OrderStatus.Paid;
+                order.PaymentReference = dto.PaymentId;
+                order.PaidOn = DateTime.UtcNow;
+
+                await _orderRepo.SaveChangesAsync();
+
+                return new ApiResponse<object>(200, "Payment Verified Successfully");
+            }
+            catch
+            {
+                order.Status = OrderStatus.Cancelled;
+                await _orderRepo.SaveChangesAsync();
+
+                return new ApiResponse<object>(400, "Payment Verification Failed");
+            }
+        }
 
 
     }

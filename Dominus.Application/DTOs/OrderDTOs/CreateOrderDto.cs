@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace Dominus.Domain.DTOs.OrderDTOs
+namespace Dominus.Application.DTOs.OrderDTOs
 {
     public class CreateOrderDto
     {

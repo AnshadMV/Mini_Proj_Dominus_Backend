@@ -1,4 +1,4 @@
-﻿namespace Dominus.Domain.DTOs.ProductDTOs
+﻿namespace Dominus.Application.DTOs.ProductDTOs
 {
     public class ProductDto
     {
@@ -19,9 +19,7 @@
 
         public int CurrentStock { get; set; }
         public bool TopSelling { get; set; } = true;
-
         public List<string> AvailableColors { get; set; } = new();
-
         public List<string> DeactivatedColors { get; set; } = new();
         public List<string> Images { get; set; } = new();
         public string Warranty { get; set; } = "";

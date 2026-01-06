@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Dominus.Domain.DTOs.OrderDTOs
+namespace Dominus.Application.DTOs.OrderDTOs
 {
-    public class OrderDto
+    public class OrderDto   
     {
         public int OrderId { get; set; }
         public DateTime OrderDate { get; set; }
@@ -14,5 +14,10 @@ namespace Dominus.Domain.DTOs.OrderDTOs
         public string UserId { get; set; } = null!;
 
         public List<OrderItemDto> Items { get; set; } = new();
+
+        public string? RazorOrderId { get; set; }   
+        public string? RazorKey { get; set; }
+
+
     }
 }

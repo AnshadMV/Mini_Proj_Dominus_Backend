@@ -1,6 +1,6 @@
 ﻿using Dominus.Application.DTOs.UserProfile;
 using Dominus.Application.Interfaces.IServices;
-using Dominus.Domain.DTOs.AuthDTOs;
+using Dominus.Application.DTOs.AuthDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -121,40 +121,7 @@ namespace Dominus.WebAPI.Controllers
 
 
 
-        //[HttpPost("refresh-token")]
-        //public async Task<IActionResult> RefreshToken()
-        //{
-        //    var refreshToken = Request.Cookies["refreshToken"];
-        //    if (string.IsNullOrEmpty(refreshToken))
-        //        return BadRequest(new { message = "Refresh token missing" });
-
-        //    var result = await _authService.RefreshTokenAsync(refreshToken);
-        //    if (result.StatusCode != 200) return Unauthorized(result);
-
-        //    SetTokenCookies(result.AccessToken, result.RefreshToken);
-
-        //    return Ok(new
-        //    {
-        //        message = result.Message,
-        //        accessToken = result.AccessToken,
-        //        refreshToken = result.RefreshToken
-        //    });
-        //}
-
-        //[HttpPost("revoke-token")]
-        //public async Task<IActionResult> RevokeToken()
-        //{
-        //    var refreshToken = Request.Cookies["refreshToken"];
-        //    if (string.IsNullOrEmpty(refreshToken))
-        //        return BadRequest(new { message = "Refresh token missing" });
-
-        //    var success = await _authService.RevokeTokenAsync(refreshToken);
-        //    if (!success) return BadRequest(new { message = "Invalid token" });
-
-        //    DeleteTokenCookies();
-        //    return Ok(new { message = "Token revoked successfully" });
-        //}
-
+       
         private void SetTokenCookies(string? accessToken, string? refreshToken)
         {
             if (!string.IsNullOrEmpty(accessToken))
@@ -197,12 +164,7 @@ namespace Dominus.WebAPI.Controllers
         }
 
 
-        //private void DeleteTokenCookies()
-        //{
-        //    Response.Cookies.Delete("accessToken");
-        //    Response.Cookies.Delete("refreshToken");
-        //}
-
+       
 
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword(ResetPasswordRequestDto dto)

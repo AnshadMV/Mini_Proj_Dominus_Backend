@@ -1,5 +1,5 @@
 ﻿using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.WishlistDTOs;
+using Dominus.Application.DTOs.WishlistDTOs;
 
 namespace Dominus.Application.Interfaces.IServices
 {

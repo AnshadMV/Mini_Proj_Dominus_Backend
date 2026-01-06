@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace Dominus.Domain.DTOs.CategoryDTOs
+namespace Dominus.Application.DTOs.CategoryDTOs
 {
     public class CreateCategoryDto
     {

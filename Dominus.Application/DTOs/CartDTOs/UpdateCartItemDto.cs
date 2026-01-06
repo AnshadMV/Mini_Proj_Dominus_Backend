@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Dominus.Domain.DTOs.CartDTOs
+namespace Dominus.Application.DTOs.CartDTOs
 {
     public class UpdateCartItemDto
     {

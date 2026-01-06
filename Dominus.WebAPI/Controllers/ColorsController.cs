@@ -1,7 +1,7 @@
 ﻿using Dominus.Application.Interfaces.IServices;
 using Dominus.Application.Services;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ColorDTOs;
+using Dominus.Application.DTOs.ColorDTOs;
 using Dominus.Domain.Entities;
 using Dominus.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;

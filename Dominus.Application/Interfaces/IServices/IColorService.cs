@@ -1,5 +1,5 @@
 ﻿using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ColorDTOs;
+using Dominus.Application.DTOs.ColorDTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

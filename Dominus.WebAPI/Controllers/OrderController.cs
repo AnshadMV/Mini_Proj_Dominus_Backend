@@ -1,7 +1,7 @@
 ﻿using Dominus.Application.DTOs.Payment;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Application.Services;
-using Dominus.Domain.DTOs.OrderDTOs;
+using Dominus.Application.DTOs.OrderDTOs;
 using Dominus.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +22,13 @@ namespace Dominus.WebAPI.Controllers
             _service = service;
         }
 
+        
+        
         private string UserId => User.FindFirstValue("userId")!;
+       
+        
+        
+        
         [HttpPost("Add")]
         [Authorize(Policy = "user")]
         public async Task<IActionResult> Create(CreateOrderDto dto)
@@ -30,6 +36,10 @@ namespace Dominus.WebAPI.Controllers
             var response = await _service.CreateOrderAsync(UserId, dto);
             return StatusCode(response.StatusCode, response);
         }
+        
+        
+        
+        
         [HttpGet("MyOrders")]
         [Authorize(Policy = "user")]
         public async Task<IActionResult> MyOrders()
@@ -37,6 +47,12 @@ namespace Dominus.WebAPI.Controllers
             var response = await _service.GetMyOrdersAsync(UserId);
             return StatusCode(response.StatusCode, response);
         }
+      
+        
+        
+        
+        
+        
         [HttpGet("GetBy_{Id}")]
         [Authorize(Policy = "user")]
         public async Task<IActionResult> GetOrdersByProduct(int productId)
@@ -45,6 +61,12 @@ namespace Dominus.WebAPI.Controllers
             var response = await _service.GetOrdersByProductAsync(productId, userId);
             return StatusCode(response.StatusCode, response);
         }
+
+
+
+
+
+
 
         [HttpPatch("Cancel")]
         [Authorize(Policy = "user")]
@@ -56,13 +78,7 @@ namespace Dominus.WebAPI.Controllers
 
 
 
-        [HttpPost("PayBy_{orderId}")]
-        [Authorize(Policy = "user")]
-        public async Task<IActionResult> PayForOrder(int orderId, PaymentDto dto)
-        {
-            var response = await _service.PayForOrderAsync(UserId, orderId, dto);
-            return StatusCode(response.StatusCode, response);
-        }
+       
 
         [HttpPatch("Admin/toggle/OrderStatus")]
         [Authorize(Policy = "Admin")]
@@ -90,17 +106,23 @@ namespace Dominus.WebAPI.Controllers
             return StatusCode(response.StatusCode, response);
         }
 
-        [HttpPost("CreatePayment/{orderId}")]
+        
+
+
+        //RazorPayment
+        [HttpPost("VerifyPayment")]
         [Authorize(Policy = "user")]
-        public async Task<IActionResult> CreatePayment(int orderId)
+        public async Task<IActionResult> VerifyPayment(RazorVerifyDto dto)
         {
-            var response = await _service.CreateUroPaySessionAsync(UserId, orderId);
+            var response = await _service.VerifyPaymentAsync(UserId, dto);
             return StatusCode(response.StatusCode, response);
         }
 
 
 
-
-
     }
 }
+
+
+
+

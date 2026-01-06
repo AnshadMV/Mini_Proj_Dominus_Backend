@@ -49,8 +49,5 @@ namespace Dominus.WebAPI.Controllers
             var response = await _userService.SoftDeleteUserAsync(id);
             return StatusCode(response.StatusCode, response);
         }
-
-
-
     }
 }

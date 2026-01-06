@@ -2,7 +2,7 @@
 using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ProductDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -38,7 +38,6 @@ namespace Dominus.WebAPI.Controllers
         }
         [HttpGet("User/GetAll")]
         [AllowAnonymous]
-
         public async Task<IActionResult> GetAllForUser()
         {
             var products = await _productService.GetAllProductsUserAsync();

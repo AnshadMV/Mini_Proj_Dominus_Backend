@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dominus.Domain.DTOs.CategoryDTOs
+namespace Dominus.Application.DTOs.CategoryDTOs
 {
     public class CategoryDto
     {

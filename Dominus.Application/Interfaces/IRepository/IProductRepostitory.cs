@@ -1,6 +1,6 @@
 ﻿using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Domain.Common;
-using Dominus.Domain.DTOs.ProductDTOs;
+using Dominus.Application.DTOs.ProductDTOs;
 using Dominus.Domain.Entities;
 using System;
 using System.Collections.Generic;

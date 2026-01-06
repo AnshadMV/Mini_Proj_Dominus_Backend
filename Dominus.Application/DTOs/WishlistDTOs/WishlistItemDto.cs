@@ -1,4 +1,4 @@
-﻿namespace Dominus.Domain.DTOs.WishlistDTOs
+﻿namespace Dominus.Application.DTOs.WishlistDTOs
 {
     public class WishlistItemDto
     {
