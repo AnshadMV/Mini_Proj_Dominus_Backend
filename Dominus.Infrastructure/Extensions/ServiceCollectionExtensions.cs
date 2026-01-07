@@ -1,8 +1,10 @@
+using Dominus.Application.Interfaces;
 using Dominus.Application.Interfaces.IRepository;
 using Dominus.Application.Interfaces.IServices;
 using Dominus.Application.Services;
 using Dominus.Domain.Interfaces;
 using Dominus.Infrastructure.Persistence;
+using Dominus.Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dominus.Infrastructure.Extensions
@@ -22,6 +24,7 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped<IWishlistRepository, WishlistRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IShippingAddressRepository, ShippingAddressRepository>();
+           services.AddScoped<IVideoServiceRepository, VideoServiceRepository>();
 
 
             return services;
@@ -42,6 +45,7 @@ namespace Dominus.Infrastructure.Extensions
             services.AddScoped<IImageStorageService, CloudinaryService>();
             services.AddScoped<IShippingAddressService, ShippingAddressService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IVideoService, VideoServiceService>();
 
             return services;
         }

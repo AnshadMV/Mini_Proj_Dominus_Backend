@@ -158,6 +158,7 @@ builder.Services.AddSingleton<RazorpayService>();
 
 
 
+
 builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
 {
     options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
@@ -193,8 +194,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<GeminiChatBotService>();
 
 var app = builder.Build();
 app.UseGlobalExceptionHandler();

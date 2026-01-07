@@ -1,6 +1,8 @@
 ﻿
+using Dominus.Application.Services;
 using Dominus.Domain.Entities;
 using Dominus.Domain.Entities.Dominus.Domain.Entities;
+using Dominus.Domain.Entities.VideoServices;
 using Microsoft.EntityFrameworkCore;
 
 namespace Dominus.Infrastructure.Data
@@ -34,6 +36,7 @@ namespace Dominus.Infrastructure.Data
 
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
         public DbSet<ShippingAddress> ShippingAddresses { get; set; }
+        public DbSet<VideoService> VideoServices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -182,6 +185,7 @@ namespace Dominus.Infrastructure.Data
 
 
 
+            modelBuilder.Entity<VideoService>();
 
 
 
