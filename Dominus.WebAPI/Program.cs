@@ -18,13 +18,11 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 
-ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-ServicePointManager.Expect100Continue = false;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
-    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+.WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
 
@@ -33,8 +31,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null
+            );
+            sqlOptions.CommandTimeout(60);
+        }
+    )
 );
+
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddRepositories();
@@ -110,15 +120,18 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalDev", policy =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy
+            .WithOrigins("http://localhost:4200")
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials()
-            .SetPreflightMaxAge(TimeSpan.FromSeconds(86400));
+            .AllowCredentials();
     });
 });
+
+
+
 
 builder.Services.AddAuthorization(options =>
 {
@@ -142,13 +155,6 @@ builder.Services.Configure<FormOptions>(options =>
     options.MemoryBufferThreshold = int.MaxValue;
 });
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.Limits.MaxRequestBodySize = int.MaxValue;
-    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
-    serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(10);
-});
-
 
 
 
@@ -157,13 +163,12 @@ builder.Services.Configure<RazorpaySettings>(
 builder.Services.AddSingleton<RazorpayService>();
 
 
-
-
-builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(10);
-    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(10);
+    options.Limits.MaxRequestBodySize = int.MaxValue;
 });
+
+
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -199,66 +204,35 @@ builder.Services.AddScoped<GeminiChatBotService>();
 
 var app = builder.Build();
 app.UseGlobalExceptionHandler();
-//MIGRATION
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
         db.Database.Migrate();
-        Console.WriteLine("Database migrated successfully.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Database migration failed: {ex.Message}");
-        throw;
+        Log.Error(ex, "Database migration failed");
     }
+
 }
 
-
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        //c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dominus API v1");
-        //c.RoutePrefix = "swagger";
+    c.EnablePersistAuthorization();
+});
 
 
-        c.EnablePersistAuthorization();
-        // Shows how long the API request took (in milliseconds) after you execute an endpoint.
-        c.ConfigObject.DisplayRequestDuration = true;
+app.UseCors("CorsPolicy");
 
-
-        // Expand-collabsive aakkaaann
-        //c.ConfigObject.DocExpansion = Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None;
-
-
-        //Allows direct URL linking to a specific endpoint or operation.
-        c.ConfigObject.DeepLinking = true;
-
-
-        // End point Filter option cheyyaan vendi
-        //c.ConfigObject.Filter = "";  
-
-
-        //Displays vendor extensions (x-*) in Swagger UI.
-        //c.ConfigObject.ShowExtensions = true;
-
-        //Shows standard OpenAPI extensions such as:
-        //c.ConfigObject.ShowCommonExtensions = true;
-    });
-    app.UseReDoc(options =>
-    {
-        options.RoutePrefix = "redoc";
-        options.SpecUrl = "/swagger/v1/swagger.json";
-        options.DocumentTitle = "Dominus API Documentation";
-    });
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
 }
 
-app.UseCors("AllowLocalDev");
-
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
