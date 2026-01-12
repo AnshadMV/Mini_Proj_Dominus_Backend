@@ -120,10 +120,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", policy =>
+    options.AddPolicy("AllowAngular", policy =>
     {
         policy
-            .WithOrigins("http://localhost:4200")
+            .WithOrigins(
+    "http://localhost:4200",
+      "https://ang-dominus.runasp.net",
+      "http://ang-dominus.runasp.net"
+)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -205,19 +209,7 @@ builder.Services.AddScoped<GeminiChatBotService>();
 var app = builder.Build();
 app.UseGlobalExceptionHandler();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    try
-    {
-        db.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        Log.Error(ex, "Database migration failed");
-    }
 
-}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -226,12 +218,9 @@ app.UseSwaggerUI(c =>
 });
 
 
-app.UseCors("CorsPolicy");
+app.UseCors("AllowAngular");
 
-if (!app.Environment.IsProduction())
-{
-    app.UseHttpsRedirection();
-}
+    
 
 app.UseAuthentication();
 app.UseAuthorization();
