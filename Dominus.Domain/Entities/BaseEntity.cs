@@ -16,5 +16,10 @@ namespace Dominus.Domain.Entities
         public DateTime? DeletedOn { get; set; }
         public string DeletedBy { get; set; } = "system";
         public bool IsDeleted { get; set; } = false;
+
+
+
+
+
     }
 }
