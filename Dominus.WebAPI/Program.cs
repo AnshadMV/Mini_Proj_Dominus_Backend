@@ -2,8 +2,6 @@ using Dominus.Application.DTOs.Payment;
 using Dominus.Application.Services;
 using Dominus.Application.Settings.Dominus.Application.Settings;
 using Dominus.Domain.Interfaces;
-//using Dominus.Infrastructure.Cloudinary;
-//using Dominus.Infrastructure.Cloudinary;
 using Dominus.Infrastructure.Data;
 using Dominus.Infrastructure.Extensions;
 using Dominus.WebAPI.Extensions;
