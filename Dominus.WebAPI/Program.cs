@@ -15,8 +15,6 @@ using System;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
-
-
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
@@ -156,24 +154,14 @@ builder.Services.Configure<FormOptions>(options =>
     options.MultipartBodyLengthLimit = int.MaxValue;
     options.MemoryBufferThreshold = int.MaxValue;
 });
-
-
-
-
 builder.Services.Configure<RazorpaySettings>(
     builder.Configuration.GetSection("Razorpay"));
 builder.Services.AddSingleton<RazorpayService>();
-
-
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.MaxRequestBodySize = int.MaxValue;
 });
-
-
-
 builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -200,29 +188,18 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<GeminiChatBotService>();
 
 var app = builder.Build();
 app.UseGlobalExceptionHandler();
-
-
-
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.EnablePersistAuthorization();
 });
-
-
 app.UseCors("AllowAngular");
-
-    
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
