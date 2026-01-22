@@ -10,12 +10,10 @@ namespace Dominus.Application.Services
     public class ColorService : IColorService
     {
         private readonly IColorRepository _repository;
-        //private readonly IGenericRepository<Color> _genericRepo;
 
         public ColorService(IColorRepository repository, IGenericRepository<Color> genericRepo)
         {
             _repository = repository;
-            //_genericRepo = genericRepo;
         }
 
 
@@ -90,7 +88,6 @@ namespace Dominus.Application.Services
             if (color == null || color.IsDeleted)
                 return new ApiResponse<ColorDto>(404, "Color not found");
 
-            // 🔹 NAME update + uniqueness (exclude same ID)
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
                 var trimmedName = dto.Name.Trim();
@@ -102,7 +99,6 @@ namespace Dominus.Application.Services
                 color.Name = trimmedName;
             }
 
-            // 🔹 HEX update + normalize + uniqueness (exclude same ID)
             if (!string.IsNullOrWhiteSpace(dto.HexCode))
             {
                 string normalizedHex;
@@ -123,7 +119,6 @@ namespace Dominus.Application.Services
                 color.HexCode = normalizedHex;
             }
 
-            // 🔹 Status update
             if (dto.IsActive.HasValue)
             {
                 color.IsActive = dto.IsActive.Value;

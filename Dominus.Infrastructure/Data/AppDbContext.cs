@@ -9,14 +9,12 @@ namespace Dominus.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
-        //session with the database 
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
         }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<User> Users { get; set; }
-
         public DbSet<Product> Products { get; set; }
         public DbSet<Color> Colors => Set<Color>();
         public DbSet<ProductColors> ProductColors => Set<ProductColors>();
@@ -180,15 +178,7 @@ namespace Dominus.Infrastructure.Data
 
             modelBuilder.Entity<ShippingAddress>()
     .HasIndex(sa => new { sa.UserId, sa.IsActive });
-
-
-
-
-
             modelBuilder.Entity<VideoService>();
-
-
-
 
         }
 
@@ -199,26 +189,20 @@ namespace Dominus.Infrastructure.Data
 
             foreach (var entry in entries)
             {
-                // 🟢 CREATE
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedOn = DateTime.UtcNow;
                     entry.Entity.CreatedBy ??= "system";
                 }
-
-                // 🔴 SOFT DELETE (IsDeleted changed)
                 else if (entry.State == EntityState.Modified &&
                          entry.OriginalValues.GetValue<bool>(nameof(BaseEntity.IsDeleted)) == false &&
                          entry.CurrentValues.GetValue<bool>(nameof(BaseEntity.IsDeleted)) == true)
                 {
                     entry.Entity.DeletedOn = DateTime.UtcNow;
                     entry.Entity.DeletedBy ??= "system";
-
-                    // ❗ DO NOT update ModifiedOn for deletes
                     entry.Entity.ModifiedOn = null;
                 }
 
-                // 🟡 NORMAL UPDATE
                 else if (entry.State == EntityState.Modified)
                 {
                     entry.Entity.ModifiedOn = DateTime.UtcNow;

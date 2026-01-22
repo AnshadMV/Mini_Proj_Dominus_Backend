@@ -112,15 +112,11 @@ namespace Dominus.Application.Services
             }
 
             order.TotalAmount = total;
-
-            // Add order and save to ensure order.Id is populated by EF (so Razor order receipt can use it).
             await _orderRepo.AddAsync(order);
             await _orderRepo.SaveChangesAsync();
 
-            // Persist product stock changes
             await _productRepo.SaveChangesAsync();
 
-            // Create Razorpay order using the DB-generated order.Id
             var razorOrder = _razor.CreateOrder(order.TotalAmount, $"ORD_{order.Id}");
             order.RazorOrderId = razorOrder["id"].ToString();
             await _orderRepo.SaveChangesAsync();

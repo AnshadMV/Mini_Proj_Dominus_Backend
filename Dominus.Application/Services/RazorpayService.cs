@@ -1,5 +1,4 @@
-﻿// Dominus.Application.Services.RazorpayService.cs
-using Dominus.Application.Settings;     // <-- ensure this is the correct namespace for RazorpaySettings
+﻿using Dominus.Application.Settings;     // <-- ensure this is the correct namespace for RazorpaySettings
 using Dominus.Application.Settings.Dominus.Application.Settings;
 using Microsoft.Extensions.Options;
 using Razorpay.Api;
@@ -39,8 +38,7 @@ namespace Dominus.Application.Services
                 { "razorpay_signature", signature }
             };
 
-            Utils.verifyPaymentSignature(attributes); // throws if invalid
-            return true;
+            Utils.verifyPaymentSignature(attributes); return true;
         }
 
         public string GetKey() => _settings.Key;

@@ -46,7 +46,6 @@ public class GeminiChatBotService
 
         if (!response.IsSuccessStatusCode)
         {
-            // THIS will show the REAL Google error
             throw new Exception(responseText);
         }
 
